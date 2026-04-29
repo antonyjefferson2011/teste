@@ -1,571 +1,601 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🐍 SNAKE JEFF - Siga seu Dedo</title>
-    
-    <!-- MediaPipe Hands -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berço de Gato — Cordas de Luz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #0a2a0a 100%);
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-        }
+  body {
+    background: #020818;
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
 
-        .container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
+  #container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
 
-        video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-            filter: brightness(0.4);
-        }
+  /* Hidden video element — only used as source for MediaPipe */
+  #inputVideo {
+    display: none;
+  }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: scaleX(-1);
-            pointer-events: none;
-        }
+  /* Main canvas covers full screen */
+  #mainCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
 
-        /* Interface */
-        .jeff-title {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            padding: 10px 30px;
-            border-radius: 50px;
-            color: #00ff00;
-            font-size: 28px;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 20px #00ff00;
-            z-index: 20;
-            letter-spacing: 4px;
-            white-space: nowrap;
-            border: 2px solid #00ff00;
-            animation: pulse 1.5s infinite;
-        }
+  /* CRT scanline overlay */
+  #scanlines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    z-index: 10;
+  }
 
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 10px #00ff00; }
-            50% { box-shadow: 0 0 30px #00ff00; }
-        }
+  /* Vignette */
+  #vignette {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center,
+      transparent 50%,
+      rgba(2, 8, 24, 0.85) 100%
+    );
+    z-index: 11;
+  }
 
-        .score-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            padding: 12px 24px;
-            border-radius: 12px;
-            color: #ffd700;
-            font-size: 24px;
-            font-weight: bold;
-            font-family: monospace;
-            z-index: 20;
-            border-right: 3px solid #00ff00;
-            border-bottom: 1px solid #00ff00;
-        }
+  /* UI overlay */
+  #ui {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 20;
+  }
 
-        .score-panel span {
-            color: #00ff00;
-            font-size: 32px;
-        }
+  #title {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(14px, 2.5vw, 22px);
+    font-weight: 900;
+    letter-spacing: 0.25em;
+    color: #00f5ff;
+    text-shadow:
+      0 0 10px #00f5ff,
+      0 0 30px #00f5ff88,
+      0 0 60px #00f5ff44;
+    white-space: nowrap;
+  }
 
-        .instruction {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            padding: 10px 18px;
-            border-radius: 12px;
-            color: #00ff00;
-            font-size: 14px;
-            font-family: monospace;
-            z-index: 20;
-            border-left: 3px solid #00ff00;
-            pointer-events: none;
-        }
+  #subtitle {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(9px, 1.2vw, 12px);
+    color: #00f5ff88;
+    letter-spacing: 0.4em;
+    white-space: nowrap;
+  }
 
-        .instruction-right {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            padding: 10px 18px;
-            border-radius: 12px;
-            color: #ffaa00;
-            font-size: 14px;
-            font-family: monospace;
-            z-index: 20;
-            text-align: right;
-            pointer-events: none;
-        }
+  #status {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #ffffff55;
+    letter-spacing: 0.2em;
+    text-align: center;
+  }
 
-        .start-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            flex-direction: column;
-            gap: 30px;
-        }
+  #hands-count {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    font-size: 10px;
+    color: #ff00ff88;
+    letter-spacing: 0.2em;
+  }
 
-        .start-btn {
-            background: linear-gradient(135deg, #00ff00, #008800);
-            border: none;
-            color: #000;
-            padding: 18px 48px;
-            font-size: 20px;
-            font-weight: bold;
-            font-family: monospace;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
-        }
+  #fps-display {
+    position: absolute;
+    top: 24px;
+    left: 28px;
+    font-size: 10px;
+    color: #00ff8888;
+    letter-spacing: 0.2em;
+  }
 
-        .start-btn:hover {
-            transform: scale(1.05);
-        }
+  /* Permission overlay */
+  #permission-screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #020818;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 20px;
+  }
 
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
-            visibility: hidden;
-        }
+  #permission-screen h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(20px, 4vw, 36px);
+    font-weight: 900;
+    color: #00f5ff;
+    text-shadow: 0 0 20px #00f5ff, 0 0 60px #00f5ff55;
+    letter-spacing: 0.2em;
+    text-align: center;
+  }
 
-        .comida {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            background: red;
-            border-radius: 50%;
-            z-index: 25;
-            pointer-events: none;
-            box-shadow: 0 0 15px red;
-            transition: all 0.1s ease;
-        }
-    </style>
+  #permission-screen p {
+    color: #ffffff88;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    max-width: 420px;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  #start-btn {
+    margin-top: 20px;
+    padding: 16px 48px;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: #020818;
+    background: #00f5ff;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.2s;
+    box-shadow: 0 0 30px #00f5ff88;
+  }
+
+  #start-btn:hover {
+    background: #ff00ff;
+    box-shadow: 0 0 40px #ff00ff99;
+    transform: scale(1.05);
+  }
+
+  .grid-line {
+    position: absolute;
+    background: rgba(0, 245, 255, 0.04);
+  }
+  .grid-h { width: 100%; height: 1px; left: 0; }
+  .grid-v { height: 100%; width: 1px; top: 0; }
+</style>
 </head>
 <body>
 
-<div id="startPanel" class="start-panel">
-    <h1 class="jeff-title" style="position: relative; top: auto; left: auto; transform: none;">🐍 SNAKE JEFF</h1>
-    <p style="color: #00ff00;">A cobra segue o seu DEDO INDICADOR!</p>
-    <button class="start-btn" id="startButton">🎮 COMEÇAR</button>
+<div id="container">
+  <video id="inputVideo" playsinline></video>
+  <canvas id="mainCanvas"></canvas>
+  <div id="scanlines"></div>
+  <div id="vignette"></div>
+
+  <div id="ui">
+    <div id="title">✦ BERÇO DE GATO ✦</div>
+    <div id="subtitle">CORDAS DE LUZ INTERATIVAS</div>
+    <div id="fps-display">FPS: --</div>
+    <div id="hands-count">MÃOS: 0</div>
+    <div id="status">APROXIME AS MÃOS PARA CRIAR CORDAS DE LUZ</div>
+  </div>
+
+  <div id="permission-screen">
+    <!-- grid decoration -->
+    <div class="grid-line grid-h" style="top:25%"></div>
+    <div class="grid-line grid-h" style="top:75%"></div>
+    <div class="grid-line grid-v" style="left:25%"></div>
+    <div class="grid-line grid-v" style="left:75%"></div>
+
+    <h1>BERÇO DE GATO</h1>
+    <p>Uma experiência de realidade aumentada que transforma seus movimentos em cordas de luz neônicas.</p>
+    <p style="color:#ff00ff88; font-size:12px;">Requer acesso à câmera</p>
+    <button id="start-btn" onclick="startExperience()">INICIAR ▶</button>
+  </div>
 </div>
 
-<div class="container">
-    <video id="inputVideo" autoplay playsinline muted></video>
-    <canvas id="outputCanvas"></canvas>
-</div>
-
-<div class="jeff-title">🐍 JEFF'S SNAKE TRACKER 🐍</div>
-<div class="score-panel">🍎 COMIDAS: <span id="score">0</span></div>
-<div class="instruction">
-    👆 DEDO INDICADOR = CABEÇA DA COBRA<br>
-    🐍 O CORPO SEGUE O CAMINHO DO SEU DEDO
-</div>
-<div class="instruction-right">
-    🎯 ENCOSTE NO PONTO VERMELHO!<br>
-    🔥 QUANTO MAIOR A COBRA, MAIS DIFÍCIL
-</div>
-
-<div id="comida" class="comida"></div>
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
 <script>
-    const videoElement = document.getElementById('inputVideo');
-    const canvasElement = document.getElementById('outputCanvas');
-    const ctx = canvasElement.getContext('2d');
-    const startPanel = document.getElementById('startPanel');
-    const startButton = document.getElementById('startButton');
-    const scoreSpan = document.getElementById('score');
-    const comidaDiv = document.getElementById('comida');
+// ─── State ────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const video = document.getElementById('inputVideo');
+const statusEl = document.getElementById('status');
+const fpsEl = document.getElementById('fps-display');
+const handsCountEl = document.getElementById('hands-count');
 
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    
-    // Cobra = array de posições (rastro do dedo)
-    let snakeBody = []; // Cada posição = {x, y}
-    let snakeLength = 5; // Começa com 5 segmentos
-    let score = 0;
-    
-    // Posição da comida
-    let foodX = 300;
-    let foodY = 300;
-    
-    // Posição atual do dedo
-    let currentFingerX = width / 2;
-    let currentFingerY = height / 2;
-    let fingerPresent = false;
-    
-    // Controle para não adicionar pontos muito rápido
-    let lastEatTime = 0;
-    
-    // Cores da cobra (gradiente)
-    let snakeColors = ['#00ff00', '#33ff33', '#66ff66', '#99ff99', '#ccffcc'];
-    
-    function resizeCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvasElement.width = width;
-        canvasElement.height = height;
-        
-        // Reposicionar comida se estiver fora
-        if (foodX > width - 30) foodX = width - 50;
-        if (foodY > height - 30) foodY = height - 50;
-        if (foodX < 20) foodX = 50;
-        if (foodY < 20) foodY = 50;
-        
-        updateComidaPosition();
+let W, H;
+let handsData = [];
+let particles = [];
+let lastTime = performance.now();
+let frameCount = 0;
+let fps = 60;
+let offscreenCam, offCtx; // for silhouette rendering
+
+// Fingertip landmark indices
+const FINGERTIPS = [4, 8, 12, 16, 20];
+// All landmarks
+const ALL_LANDMARKS = Array.from({length: 21}, (_, i) => i);
+
+// Color palette
+const COLORS = {
+  cyan: '#00f5ff',
+  magenta: '#ff00ff',
+  yellow: '#ffe600',
+  green: '#00ff88',
+  red: '#ff3366',
+};
+
+// ─── Resize ──────────────────────────────────────────────────────────────────
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  offscreenCam = document.createElement('canvas');
+  offscreenCam.width = W;
+  offscreenCam.height = H;
+  offCtx = offscreenCam.getContext('2d');
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ─── Particle system ─────────────────────────────────────────────────────────
+class Particle {
+  constructor(x, y, color) {
+    this.x = x; this.y = y;
+    this.vx = (Math.random() - 0.5) * 8;
+    this.vy = (Math.random() - 0.5) * 8;
+    this.life = 1.0;
+    this.decay = 0.02 + Math.random() * 0.03;
+    this.size = 2 + Math.random() * 5;
+    this.color = color;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.92;
+    this.vy *= 0.92;
+    this.life -= this.decay;
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function spawnExplosion(x, y, color) {
+  for (let i = 0; i < 28; i++) {
+    particles.push(new Particle(x, y, color));
+  }
+}
+
+// ─── Drawing helpers ─────────────────────────────────────────────────────────
+function lerpColor(a, b, t) {
+  // a, b: [r,g,b], t: 0-1
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return [r, g, b];
+}
+
+function rgbStr(arr, a = 1) {
+  return `rgba(${arr[0]},${arr[1]},${arr[2]},${a})`;
+}
+
+function drawGlowDot(ctx, x, y, r, color, glowSize = 18) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = glowSize;
+  // Outer glow ring
+  ctx.beginPath();
+  ctx.arc(x, y, r + 3, 0, Math.PI * 2);
+  ctx.fillStyle = rgbStr(hexToRgb(color), 0.15);
+  ctx.fill();
+  // Core dot
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  // White hot center
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawLaserString(ctx, x1, y1, x2, y2, dist, maxDist) {
+  const t = Math.min(dist / maxDist, 1);
+
+  // Color: cyan → magenta → yellow
+  const cCyan = hexToRgb('#00f5ff');
+  const cMag  = hexToRgb('#ff00ff');
+  const cYel  = hexToRgb('#ffe600');
+
+  let colorArr;
+  if (t < 0.5) {
+    colorArr = lerpColor(cCyan, cMag, t * 2);
+  } else {
+    colorArr = lerpColor(cMag, cYel, (t - 0.5) * 2);
+  }
+  const color = `rgb(${colorArr[0]},${colorArr[1]},${colorArr[2]})`;
+
+  const thickness = Math.max(1, 3 - t * 2);
+
+  // Glow layers
+  const layers = [
+    { blur: 30, alpha: 0.15, width: thickness * 6 },
+    { blur: 15, alpha: 0.35, width: thickness * 3 },
+    { blur:  6, alpha: 0.7,  width: thickness * 1.5 },
+    { blur:  0, alpha: 1.0,  width: thickness },
+  ];
+
+  for (const layer of layers) {
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = layer.blur;
+    ctx.strokeStyle = `rgba(${colorArr[0]},${colorArr[1]},${colorArr[2]},${layer.alpha})`;
+    ctx.lineWidth = layer.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    // Slight curve using midpoint offset
+    const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * dist * 0.03;
+    const my = (y1 + y2) / 2 + (Math.random() - 0.5) * dist * 0.03;
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(mx, my, x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  return color;
+}
+
+function drawHandSkeleton(ctx, landmarks, color) {
+  // Connections
+  const connections = [
+    [0,1],[1,2],[2,3],[3,4],       // thumb
+    [0,5],[5,6],[6,7],[7,8],       // index
+    [5,9],[9,10],[10,11],[11,12],  // middle
+    [9,13],[13,14],[14,15],[15,16],// ring
+    [13,17],[17,18],[18,19],[19,20],// pinky
+    [0,17]                          // palm base
+  ];
+  ctx.save();
+  ctx.strokeStyle = color + '44';
+  ctx.lineWidth = 1;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  for (const [a, b] of connections) {
+    const pa = landmarks[a];
+    const pb = landmarks[b];
+    ctx.beginPath();
+    ctx.moveTo(pa.x * W, pa.y * H);
+    ctx.lineTo(pb.x * W, pb.y * H);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ─── Main draw loop ───────────────────────────────────────────────────────────
+let prevTipPositions = {}; // for touch detection debounce
+const touchCooldowns = {};
+
+function draw(timestamp) {
+  requestAnimationFrame(draw);
+
+  // FPS
+  frameCount++;
+  if (timestamp - lastTime >= 1000) {
+    fps = frameCount;
+    frameCount = 0;
+    lastTime = timestamp;
+    fpsEl.textContent = `FPS: ${fps}`;
+  }
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw background — deep midnight blue
+  ctx.fillStyle = '#020818';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw subtle grid
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,245,255,0.03)';
+  ctx.lineWidth = 1;
+  const gridSize = 60;
+  for (let x = 0; x < W; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Draw camera silhouette (dark blue-tinted)
+  if (video.readyState >= 2) {
+    offCtx.clearRect(0, 0, W, H);
+    offCtx.save();
+    offCtx.translate(W, 0);
+    offCtx.scale(-1, 1);
+    offCtx.drawImage(video, 0, 0, W, H);
+    offCtx.restore();
+    // Tint the camera frame dark
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.drawImage(offscreenCam, 0, 0);
+    ctx.globalAlpha = 1;
+    // Dark overlay
+    ctx.fillStyle = 'rgba(2,8,24,0.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  const hands = handsData;
+  handsCountEl.textContent = `MÃOS: ${hands.length}`;
+
+  // Categorize hands
+  let leftHand = null, rightHand = null;
+  for (const h of hands) {
+    // MediaPipe labels are from the camera's perspective (mirrored)
+    if (h.handedness === 'Left') rightHand = h;
+    else leftHand = h;
+  }
+
+  // Draw skeletons
+  if (leftHand) drawHandSkeleton(ctx, leftHand.landmarks, '#00f5ff');
+  if (rightHand) drawHandSkeleton(ctx, rightHand.landmarks, '#ff00ff');
+
+  // Draw landmark dots
+  for (const h of hands) {
+    const isTip = (i) => FINGERTIPS.includes(i);
+    const color = h.handedness === 'Left' ? '#ff00ff' : '#00f5ff';
+    for (let i = 0; i < h.landmarks.length; i++) {
+      const lm = h.landmarks[i];
+      const x = lm.x * W;
+      const y = lm.y * H;
+      const r = isTip(i) ? 7 : 4;
+      const glow = isTip(i) ? 24 : 12;
+      drawGlowDot(ctx, x, y, r, isTip(i) ? color : color + 'aa', glow);
     }
-    
-    function updateComidaPosition() {
-        comidaDiv.style.left = (foodX - 10) + 'px';
-        comidaDiv.style.top = (foodY - 10) + 'px';
+  }
+
+  // Draw strings between hands
+  if (leftHand && rightHand) {
+    for (let fi = 0; fi < FINGERTIPS.length; fi++) {
+      const li = FINGERTIPS[fi];
+      const lLm = leftHand.landmarks[li];
+      const rLm = rightHand.landmarks[li];
+
+      const lx = lLm.x * W, ly = lLm.y * H;
+      const rx = rLm.x * W, ry = rLm.y * H;
+
+      const dist = Math.hypot(rx - lx, ry - ly);
+      const maxDist = Math.hypot(W, H) * 0.8;
+
+      const color = drawLaserString(ctx, lx, ly, rx, ry, dist, maxDist);
+
+      // Touch detection
+      const key = `tip_${fi}`;
+      if (!touchCooldowns[key]) touchCooldowns[key] = 0;
+
+      if (dist < 40 && touchCooldowns[key] <= 0) {
+        spawnExplosion((lx + rx) / 2, (ly + ry) / 2, color);
+        touchCooldowns[key] = 30; // frames cooldown
+      }
+      if (touchCooldowns[key] > 0) touchCooldowns[key]--;
     }
-    
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-    });
-    
-    // Gerar nova comida em posição aleatória (longe da cobra)
-    function generateRandomFood() {
-        let newX, newY;
-        let attempts = 0;
-        let farFromSnake = false;
-        
-        do {
-            newX = 50 + Math.random() * (width - 100);
-            newY = 50 + Math.random() * (height - 100);
-            farFromSnake = true;
-            
-            // Verificar se está longe da cabeça da cobra
-            if (snakeBody.length > 0) {
-                const head = snakeBody[0];
-                const distToHead = Math.hypot(newX - head.x, newY - head.y);
-                if (distToHead < 100) farFromSnake = false;
-            }
-            
-            attempts++;
-            if (attempts > 50) break;
-        } while (!farFromSnake);
-        
-        foodX = newX;
-        foodY = newY;
-        updateComidaPosition();
-    }
-    
-    // Verificar se comeu a comida
-    function checkEat() {
-        if (!fingerPresent) return false;
-        
-        const distToFood = Math.hypot(currentFingerX - foodX, currentFingerY - foodY);
-        
-        if (distToFood < 25) { // Distância para comer
-            const now = Date.now();
-            if (now - lastEatTime > 200) { // Evitar comer múltiplas vezes
-                lastEatTime = now;
-                score++;
-                scoreSpan.textContent = score;
-                snakeLength += 2; // Aumenta o tamanho da cobra
-                generateRandomFood();
-                
-                // Efeito visual na comida
-                comidaDiv.style.transform = 'scale(1.5)';
-                setTimeout(() => comidaDiv.style.transform = 'scale(1)', 150);
-                
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    // Atualizar corpo da cobra (o rastro segue o dedo)
-    function updateSnakeBody() {
-        if (!fingerPresent) return;
-        
-        // Adicionar posição atual do dedo no início do array
-        snakeBody.unshift({ x: currentFingerX, y: currentFingerY });
-        
-        // Manter apenas o tamanho atual da cobra
-        while (snakeBody.length > snakeLength) {
-            snakeBody.pop();
-        }
-    }
-    
-    // Verificar auto-colisão (se a cabeça encostou no corpo)
-    function checkSelfCollision() {
-        if (snakeBody.length < 10) return false;
-        
-        const head = snakeBody[0];
-        
-        for (let i = 5; i < snakeBody.length; i++) { // Começa do 5 pra ignorar a região da cabeça
-            const segment = snakeBody[i];
-            const dist = Math.hypot(head.x - segment.x, head.y - segment.y);
-            if (dist < 15) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    // Desenhar tudo
-    function draw() {
-        if (!ctx) return;
-        
-        // Limpar canvas com fade (efeito de rastro legal)
-        ctx.fillStyle = 'rgba(10, 10, 10, 0.2)';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Desenhar o caminho da cobra (rastro brilhante)
-        for (let i = 0; i < snakeBody.length; i++) {
-            const segment = snakeBody[i];
-            const opacity = 1 - (i / snakeLength) * 0.7;
-            const size = 16 - (i / snakeLength) * 8;
-            const colorIndex = Math.min(Math.floor(i / 3), snakeColors.length - 1);
-            
-            ctx.beginPath();
-            ctx.arc(segment.x, segment.y, Math.max(size, 6), 0, 2 * Math.PI);
-            
-            // Gradiente radial para cada segmento
-            const gradient = ctx.createRadialGradient(segment.x, segment.y, 0, segment.x, segment.y, size);
-            gradient.addColorStop(0, snakeColors[colorIndex]);
-            gradient.addColorStop(1, '#006600');
-            
-            ctx.fillStyle = gradient;
-            ctx.globalAlpha = opacity;
-            ctx.fill();
-            
-            // Brilho nos segmentos
-            ctx.beginPath();
-            ctx.arc(segment.x, segment.y, size/2, 0, 2 * Math.PI);
-            ctx.fillStyle = '#aaffaa';
-            ctx.globalAlpha = opacity * 0.5;
-            ctx.fill();
-        }
-        
-        ctx.globalAlpha = 1;
-        
-        // Desenhar olhos na cabeça (se existir)
-        if (snakeBody.length > 0) {
-            const head = snakeBody[0];
-            ctx.beginPath();
-            ctx.arc(head.x - 4, head.y - 4, 3, 0, 2 * Math.PI);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(head.x + 4, head.y - 4, 3, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(head.x - 4, head.y - 4, 1.5, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(head.x + 4, head.y - 4, 1.5, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Língua (efeito)
-            ctx.beginPath();
-            ctx.moveTo(head.x, head.y + 2);
-            ctx.lineTo(head.x - 3, head.y + 8);
-            ctx.lineTo(head.x + 3, head.y + 8);
-            ctx.fillStyle = '#ff4444';
-            ctx.fill();
-        }
-        
-        // Desenhar anel ao redor do dedo
-        if (fingerPresent) {
-            ctx.beginPath();
-            ctx.arc(currentFingerX, currentFingerY, 20, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([5, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // Linha de mira para a comida
-            ctx.beginPath();
-            ctx.moveTo(currentFingerX, currentFingerY);
-            ctx.lineTo(foodX, foodY);
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-        
-        // Brilho na comida
-        ctx.beginPath();
-        ctx.arc(foodX, foodY, 15, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-        ctx.fill();
-    }
-    
-    // Desenhar mãos do MediaPipe
-    function drawHands(landmarks) {
-        if (!landmarks || landmarks.length === 0) {
-            fingerPresent = false;
-            return;
-        }
-        
-        // Pegar o dedo indicador (ponto 8)
-        const indexFinger = landmarks[0][8];
-        if (indexFinger) {
-            // Converter coordenadas normalizadas para tela (levando em conta espelhamento)
-            let fingerX = indexFinger.x * width;
-            let fingerY = indexFinger.y * height;
-            
-            // Inverter X por causa do espelhamento do video
-            fingerX = width - fingerX;
-            
-            currentFingerX = fingerX;
-            currentFingerY = fingerY;
-            fingerPresent = true;
-            
-            // Verificar colisão com comida primeiro
-            checkEat();
-            
-            // Atualizar corpo da cobra
-            updateSnakeBody();
-            
-            // Verificar auto-colisão
-            if (checkSelfCollision() && snakeBody.length > 15) {
-                // Resetar o jogo se colidir (opcional)
-                snakeLength = 5;
-                score = 0;
-                scoreSpan.textContent = score;
-                snakeBody = [];
-                generateRandomFood();
-            }
-        }
-        
-        // Desenhar esqueleto da mão (opcional, pra debug)
-        for (const hand of landmarks) {
-            for (const connection of HAND_CONNECTIONS) {
-                const start = hand[connection[0]];
-                const end = hand[connection[1]];
-                if (start && end) {
-                    let startX = start.x * width;
-                    let startY = start.y * height;
-                    let endX = end.x * width;
-                    let endY = end.y * height;
-                    
-                    // Inverter X
-                    startX = width - startX;
-                    endX = width - endX;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(startX, startY);
-                    ctx.lineTo(endX, endY);
-                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-            }
-        }
-        
-        draw();
-    }
-    
-    // Inicializar MediaPipe
-    function initHandTracking() {
-        const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  }
+
+  // Update + draw particles
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    p.update();
+    p.draw(ctx);
+  }
+
+  // Status message
+  if (hands.length === 0) {
+    statusEl.textContent = 'MOSTRE SUAS MÃOS PARA A CÂMERA';
+  } else if (hands.length === 1) {
+    statusEl.textContent = 'MOSTRE AMBAS AS MÃOS PARA CRIAR CORDAS';
+  } else {
+    statusEl.textContent = 'APROXIME OS DEDOS PARA CRIAR EXPLOSÕES ✦';
+  }
+}
+
+// ─── MediaPipe setup ──────────────────────────────────────────────────────────
+function startExperience() {
+  document.getElementById('permission-screen').style.display = 'none';
+
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  });
+
+  hands.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.6,
+  });
+
+  hands.onResults((results) => {
+    handsData = [];
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        handsData.push({
+          landmarks: results.multiHandLandmarks[i],
+          handedness: results.multiHandedness[i].label,
         });
-        
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 0,
-            minDetectionConfidence: 0.6,
-            minTrackingConfidence: 0.5
-        });
-        
-        hands.onResults((results) => {
-            drawHands(results.multiHandLandmarks);
-        });
-        
-        const camera = new Camera(videoElement, {
-            onFrame: async () => await hands.send({ image: videoElement }),
-            width: 640,
-            height: 480,
-            facingMode: 'user'
-        });
-        
-        camera.start();
+      }
     }
-    
-    // Loop de animação
-    function animate() {
-        draw();
-        requestAnimationFrame(animate);
-    }
-    
-    // Evento de início
-    startButton.addEventListener('click', async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            videoElement.srcObject = stream;
-            await new Promise(resolve => videoElement.onloadedmetadata = resolve);
-            
-            resizeCanvas();
-            initHandTracking();
-            animate();
-            
-            // Iniciar com uma cobra pequena
-            snakeLength = 5;
-            score = 0;
-            scoreSpan.textContent = score;
-            snakeBody = [];
-            generateRandomFood();
-            
-            startPanel.classList.add('hidden');
-            
-        } catch (error) {
-            alert('Erro ao acessar câmera. Verifique as permissões.');
-        }
-    });
-    
-    resizeCanvas();
-    updateComidaPosition();
-    
-    console.log('🐍 SNAKE JEFF - Mova seu dedo indicador! A cobra segue você!');
+  });
+
+  const camera = new Camera(video, {
+    onFrame: async () => {
+      await hands.send({ image: video });
+    },
+    width: 1280,
+    height: 720,
+    facingMode: 'user',
+  });
+
+  camera.start().catch(err => {
+    document.getElementById('permission-screen').style.display = 'flex';
+    document.getElementById('permission-screen').querySelector('p').textContent =
+      'Erro ao acessar a câmera: ' + err.message;
+  });
+
+  requestAnimationFrame(draw);
+}
 </script>
 </body>
 </html>
