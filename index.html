@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🐍 SNAKE JEFF - Controle com as Mãos</title>
+    <title>🐍 SNAKE JEFF - Siga seu Dedo</title>
     
     <!-- MediaPipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -19,18 +19,15 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a2a1a 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #0a2a0a 100%);
             overflow: hidden;
-            font-family: 'Press Start 2P', 'Courier New', monospace;
+            font-family: 'Courier New', monospace;
         }
 
         .container {
             position: relative;
             width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         video {
@@ -41,8 +38,7 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
-            filter: brightness(0.3);
-            opacity: 0.5;
+            filter: brightness(0.4);
         }
 
         canvas {
@@ -55,93 +51,81 @@
             pointer-events: none;
         }
 
-        /* Game Canvas */
-        #gameCanvas {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 4px solid #00ff00;
-            border-radius: 16px;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-            z-index: 10;
-            pointer-events: auto;
-            transform: scaleX(1);
-        }
-
-        .game-area {
-            position: relative;
-            z-index: 15;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        /* Score Panel */
-        .score-panel {
-            background: rgba(0, 0, 0, 0.85);
+        /* Interface */
+        .jeff-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
-            padding: 15px 30px;
-            border-radius: 20px;
-            border: 2px solid #00ff00;
-            display: flex;
-            gap: 40px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 20px;
-        }
-
-        .score-item {
+            padding: 10px 30px;
+            border-radius: 50px;
             color: #00ff00;
-            text-shadow: 0 0 10px #00ff00;
-        }
-
-        .score-item span {
-            color: #ffd700;
             font-size: 28px;
             font-weight: bold;
-        }
-
-        .jeff-title {
-            color: #ff6b6b;
-            text-shadow: 0 0 20px #ff6b6b;
-            font-size: 24px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px #00ff00;
+            z-index: 20;
             letter-spacing: 4px;
-            animation: pulse 1s infinite;
+            white-space: nowrap;
+            border: 2px solid #00ff00;
+            animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; text-shadow: 0 0 20px #ff6b6b; }
-            50% { opacity: 0.8; text-shadow: 0 0 40px #ff0000; }
+            0%, 100% { box-shadow: 0 0 10px #00ff00; }
+            50% { box-shadow: 0 0 30px #00ff00; }
         }
 
-        /* Controls Info */
-        .controls-info {
+        .score-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: monospace;
+            z-index: 20;
+            border-right: 3px solid #00ff00;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .score-panel span {
+            color: #00ff00;
+            font-size: 32px;
+        }
+
+        .instruction {
             position: fixed;
             bottom: 20px;
             left: 20px;
             background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            padding: 12px 20px;
+            backdrop-filter: blur(8px);
+            padding: 10px 18px;
             border-radius: 12px;
             color: #00ff00;
-            font-size: 12px;
+            font-size: 14px;
             font-family: monospace;
             z-index: 20;
             border-left: 3px solid #00ff00;
             pointer-events: none;
         }
 
-        .instruction {
+        .instruction-right {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(8px);
             padding: 10px 18px;
-            border-radius: 20px;
-            color: #ffd700;
-            font-size: 12px;
+            border-radius: 12px;
+            color: #ffaa00;
+            font-size: 14px;
             font-family: monospace;
             z-index: 20;
             text-align: right;
@@ -160,7 +144,6 @@
             justify-content: center;
             align-items: center;
             z-index: 100;
-            transition: opacity 0.5s;
             flex-direction: column;
             gap: 30px;
         }
@@ -172,7 +155,7 @@
             padding: 18px 48px;
             font-size: 20px;
             font-weight: bold;
-            font-family: 'Press Start 2P', monospace;
+            font-family: monospace;
             border-radius: 50px;
             cursor: pointer;
             transition: transform 0.2s;
@@ -189,389 +172,336 @@
             visibility: hidden;
         }
 
-        .game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            border: 2px solid #ff0000;
-            display: none;
-            z-index: 30;
-        }
-
-        .game-over h2 {
-            color: #ff0000;
-            margin-bottom: 20px;
-        }
-
-        .restart-btn {
-            background: #00ff00;
-            border: none;
-            padding: 10px 20px;
-            font-family: monospace;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
+        .comida {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: red;
+            border-radius: 50%;
+            z-index: 25;
+            pointer-events: none;
+            box-shadow: 0 0 15px red;
+            transition: all 0.1s ease;
         }
     </style>
 </head>
 <body>
 
 <div id="startPanel" class="start-panel">
-    <h1 class="jeff-title" style="font-size: 48px;">🐍 SNAKE JEFF</h1>
-    <p style="color: #00ff00; font-family: monospace;">Controle a cobra com seus dedos!</p>
-    <button class="start-btn" id="startButton">🎮 ATIVAR CÂMERA</button>
-    <p style="color: #888; font-size: 12px; margin-top: 20px;">👆 Mova a mão para controlar a cobra</p>
+    <h1 class="jeff-title" style="position: relative; top: auto; left: auto; transform: none;">🐍 SNAKE JEFF</h1>
+    <p style="color: #00ff00;">A cobra segue o seu DEDO INDICADOR!</p>
+    <button class="start-btn" id="startButton">🎮 COMEÇAR</button>
 </div>
 
 <div class="container">
     <video id="inputVideo" autoplay playsinline muted></video>
     <canvas id="outputCanvas"></canvas>
-    
-    <div class="game-area">
-        <div class="score-panel">
-            <div class="score-item">🐍 JEFF SCORE: <span id="score">0</span></div>
-            <div class="score-item">🏆 HIGH SCORE: <span id="highScore">0</span></div>
-        </div>
-        <div class="jeff-title" id="jeffTitle">🐍 JEFF\'S SNAKE 🐍</div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-    </div>
 </div>
 
-<div class="controls-info">
-    🖐️ CONTROLE: Mova sua MÃO → Direção da Cobra
-</div>
+<div class="jeff-title">🐍 JEFF'S SNAKE TRACKER 🐍</div>
+<div class="score-panel">🍎 COMIDAS: <span id="score">0</span></div>
 <div class="instruction">
-    👆 Mão fechada = Pausa<br>
-    ✋ Mão aberta = Retomar<br>
-    🎮 JEFF no comando!
+    👆 DEDO INDICADOR = CABEÇA DA COBRA<br>
+    🐍 O CORPO SEGUE O CAMINHO DO SEU DEDO
+</div>
+<div class="instruction-right">
+    🎯 ENCOSTE NO PONTO VERMELHO!<br>
+    🔥 QUANTO MAIOR A COBRA, MAIS DIFÍCIL
 </div>
 
-<div id="gameOver" class="game-over">
-    <h2>💀 GAME OVER 💀</h2>
-    <p style="color: white;">Sua pontuação: <span id="finalScore">0</span></p>
-    <button class="restart-btn" onclick="restartGame()">🐍 JOGAR NOVAMENTE</button>
-</div>
+<div id="comida" class="comida"></div>
 
 <script>
-    // Elementos
     const videoElement = document.getElementById('inputVideo');
     const canvasElement = document.getElementById('outputCanvas');
     const ctx = canvasElement.getContext('2d');
-    const gameCanvas = document.getElementById('gameCanvas');
-    const gameCtx = gameCanvas.getContext('2d');
     const startPanel = document.getElementById('startPanel');
     const startButton = document.getElementById('startButton');
     const scoreSpan = document.getElementById('score');
-    const highScoreSpan = document.getElementById('highScore');
-    const finalScoreSpan = document.getElementById('finalScore');
-    const gameOverDiv = document.getElementById('gameOver');
-    const jeffTitle = document.getElementById('jeffTitle');
+    const comidaDiv = document.getElementById('comida');
 
     let width = window.innerWidth;
     let height = window.innerHeight;
     
-    // Configurações do jogo
-    const GRID_SIZE = 20;
-    const CELL_SIZE = gameCanvas.width / GRID_SIZE;
-    
-    let snake = [{x: 10, y: 10}];
-    let direction = {x: 1, y: 0};
-    let nextDirection = {x: 1, y: 0};
-    let food = {x: 15, y: 10};
+    // Cobra = array de posições (rastro do dedo)
+    let snakeBody = []; // Cada posição = {x, y}
+    let snakeLength = 5; // Começa com 5 segmentos
     let score = 0;
-    let highScore = localStorage.getItem('snakeHighScore') || 0;
-    let gameLoop = null;
-    let gameRunning = true;
-    let gamePaused = false;
     
-    // Controle por mão
-    let lastHandX = 0;
-    let lastHandY = 0;
-    let handPresent = false;
+    // Posição da comida
+    let foodX = 300;
+    let foodY = 300;
     
-    highScoreSpan.textContent = highScore;
+    // Posição atual do dedo
+    let currentFingerX = width / 2;
+    let currentFingerY = height / 2;
+    let fingerPresent = false;
     
-    // Desenhar jogo
-    function drawGame() {
-        if (!gameCtx) return;
+    // Controle para não adicionar pontos muito rápido
+    let lastEatTime = 0;
+    
+    // Cores da cobra (gradiente)
+    let snakeColors = ['#00ff00', '#33ff33', '#66ff66', '#99ff99', '#ccffcc'];
+    
+    function resizeCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvasElement.width = width;
+        canvasElement.height = height;
         
-        // Limpar canvas
-        gameCtx.fillStyle = '#0a0a0a';
-        gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+        // Reposicionar comida se estiver fora
+        if (foodX > width - 30) foodX = width - 50;
+        if (foodY > height - 30) foodY = height - 50;
+        if (foodX < 20) foodX = 50;
+        if (foodY < 20) foodY = 50;
         
-        // Desenhar grade
-        gameCtx.strokeStyle = '#1a3a1a';
-        gameCtx.lineWidth = 0.5;
-        for (let i = 0; i <= GRID_SIZE; i++) {
-            gameCtx.beginPath();
-            gameCtx.moveTo(i * CELL_SIZE, 0);
-            gameCtx.lineTo(i * CELL_SIZE, gameCanvas.height);
-            gameCtx.stroke();
-            gameCtx.beginPath();
-            gameCtx.moveTo(0, i * CELL_SIZE);
-            gameCtx.lineTo(gameCanvas.width, i * CELL_SIZE);
-            gameCtx.stroke();
-        }
-        
-        // Desenhar comida
-        gameCtx.fillStyle = '#ff0000';
-        gameCtx.shadowBlur = 15;
-        gameCtx.shadowColor = '#ff0000';
-        gameCtx.fillRect(food.x * CELL_SIZE, food.y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
-        
-        // Desenhar cobra
-        snake.forEach((segment, index) => {
-            const isHead = index === 0;
-            const gradient = gameCtx.createLinearGradient(
-                segment.x * CELL_SIZE, segment.y * CELL_SIZE,
-                segment.x * CELL_SIZE + CELL_SIZE, segment.y * CELL_SIZE + CELL_SIZE
-            );
-            
-            if (isHead) {
-                gradient.addColorStop(0, '#00ff00');
-                gradient.addColorStop(1, '#00aa00');
-                gameCtx.fillStyle = gradient;
-                gameCtx.shadowBlur = 10;
-                gameCtx.shadowColor = '#00ff00';
-            } else {
-                gradient.addColorStop(0, '#33cc33');
-                gradient.addColorStop(1, '#228822');
-                gameCtx.fillStyle = gradient;
-                gameCtx.shadowBlur = 5;
-                gameCtx.shadowColor = '#33cc33';
-            }
-            
-            gameCtx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
-        });
-        gameCtx.shadowBlur = 0;
-        
-        // Desenhar olhos na cabeça
-        const head = snake[0];
-        gameCtx.fillStyle = 'white';
-        gameCtx.fillRect(head.x * CELL_SIZE + 4, head.y * CELL_SIZE + 4, 4, 4);
-        gameCtx.fillRect(head.x * CELL_SIZE + 12, head.y * CELL_SIZE + 4, 4, 4);
-        gameCtx.fillStyle = 'black';
-        gameCtx.fillRect(head.x * CELL_SIZE + 5, head.y * CELL_SIZE + 5, 2, 2);
-        gameCtx.fillRect(head.x * CELL_SIZE + 13, head.y * CELL_SIZE + 5, 2, 2);
-        
-        // Texto pause
-        if (gamePaused && gameRunning) {
-            gameCtx.font = '20px "Press Start 2P", monospace';
-            gameCtx.fillStyle = '#ffd700';
-            gameCtx.shadowBlur = 0;
-            gameCtx.fillText('⏸ PAUSADO', gameCanvas.width/2 - 80, gameCanvas.height/2);
-        }
+        updateComidaPosition();
     }
     
-    // Atualizar jogo
-    function updateGame() {
-        if (!gameRunning || gamePaused) return;
-        
-        direction = {...nextDirection};
-        
-        const newHead = {
-            x: snake[0].x + direction.x,
-            y: snake[0].y + direction.y
-        };
-        
-        // Verificar colisão com comida
-        if (newHead.x === food.x && newHead.y === food.y) {
-            snake.unshift(newHead);
-            score++;
-            scoreSpan.textContent = score;
-            
-            if (score > highScore) {
-                highScore = score;
-                highScoreSpan.textContent = highScore;
-                localStorage.setItem('snakeHighScore', highScore);
-                // Efeito especial quando bate recorde
-                jeffTitle.style.animation = 'pulse 0.5s infinite';
-                setTimeout(() => {
-                    jeffTitle.style.animation = 'pulse 1s infinite';
-                }, 2000);
-            }
-            
-            // Gerar nova comida
-            do {
-                food = {
-                    x: Math.floor(Math.random() * GRID_SIZE),
-                    y: Math.floor(Math.random() * GRID_SIZE)
-                };
-            } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
-        } else {
-            snake.unshift(newHead);
-            snake.pop();
-        }
-        
-        // Verificar colisões
-        const head = snake[0];
-        
-        // Colisão com paredes
-        if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
-            gameOver();
-            return;
-        }
-        
-        // Colisão com o próprio corpo
-        for (let i = 1; i < snake.length; i++) {
-            if (head.x === snake[i].x && head.y === snake[i].y) {
-                gameOver();
-                return;
-            }
-        }
-        
-        drawGame();
+    function updateComidaPosition() {
+        comidaDiv.style.left = (foodX - 10) + 'px';
+        comidaDiv.style.top = (foodY - 10) + 'px';
     }
     
-    function gameOver() {
-        gameRunning = false;
-        if (gameLoop) clearInterval(gameLoop);
-        finalScoreSpan.textContent = score;
-        gameOverDiv.style.display = 'block';
-    }
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+    });
     
-    function restartGame() {
-        snake = [{x: 10, y: 10}];
-        direction = {x: 1, y: 0};
-        nextDirection = {x: 1, y: 0};
-        score = 0;
-        gameRunning = true;
-        gamePaused = false;
-        scoreSpan.textContent = 0;
-        gameOverDiv.style.display = 'none';
+    // Gerar nova comida em posição aleatória (longe da cobra)
+    function generateRandomFood() {
+        let newX, newY;
+        let attempts = 0;
+        let farFromSnake = false;
         
-        // Gerar comida longe da cobra
         do {
-            food = {
-                x: Math.floor(Math.random() * GRID_SIZE),
-                y: Math.floor(Math.random() * GRID_SIZE)
-            };
-        } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
-        
-        if (gameLoop) clearInterval(gameLoop);
-        gameLoop = setInterval(updateGame, 100);
-        drawGame();
-    }
-    
-    // Controle por mão
-    function updateDirectionFromHand(handLandmarks) {
-        if (!handLandmarks || !gameRunning || gamePaused) return;
-        
-        // Pegar ponto da palma da mão (centro)
-        const palm = handLandmarks[0];
-        const handX = palm.x;
-        const handY = palm.y;
-        
-        if (handPresent) {
-            const deltaX = handX - lastHandX;
-            const deltaY = handY - lastHandY;
+            newX = 50 + Math.random() * (width - 100);
+            newY = 50 + Math.random() * (height - 100);
+            farFromSnake = true;
             
-            // Definir direção baseada no movimento da mão
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 0.01) {
-                if (deltaX > 0 && direction.x !== -1) {
-                    nextDirection = {x: 1, y: 0};
-                } else if (deltaX < 0 && direction.x !== 1) {
-                    nextDirection = {x: -1, y: 0};
-                }
-            } else if (Math.abs(deltaY) > 0.01) {
-                if (deltaY > 0 && direction.y !== -1) {
-                    nextDirection = {x: 0, y: 1};
-                } else if (deltaY < 0 && direction.y !== 1) {
-                    nextDirection = {x: 0, y: -1};
-                }
+            // Verificar se está longe da cabeça da cobra
+            if (snakeBody.length > 0) {
+                const head = snakeBody[0];
+                const distToHead = Math.hypot(newX - head.x, newY - head.y);
+                if (distToHead < 100) farFromSnake = false;
             }
-        }
+            
+            attempts++;
+            if (attempts > 50) break;
+        } while (!farFromSnake);
         
-        lastHandX = handX;
-        lastHandY = handY;
-        handPresent = true;
+        foodX = newX;
+        foodY = newY;
+        updateComidaPosition();
     }
     
-    // Detectar gesto de mão fechada/aberta para pause
-    function detectHandGesture(landmarks) {
-        if (!landmarks || !gameRunning) return;
+    // Verificar se comeu a comida
+    function checkEat() {
+        if (!fingerPresent) return false;
         
-        // Verificar se a mão está fechada (todos os dedos para baixo)
-        const fingerTips = [8, 12, 16, 20]; // Indicador, médio, anelar, mindinho
-        const fingerMCPs = [5, 9, 13, 17];
+        const distToFood = Math.hypot(currentFingerX - foodX, currentFingerY - foodY);
         
-        let closedFingers = 0;
-        for (let i = 0; i < fingerTips.length; i++) {
-            if (landmarks[fingerTips[i]].y > landmarks[fingerMCPs[i]].y) {
-                closedFingers++;
+        if (distToFood < 25) { // Distância para comer
+            const now = Date.now();
+            if (now - lastEatTime > 200) { // Evitar comer múltiplas vezes
+                lastEatTime = now;
+                score++;
+                scoreSpan.textContent = score;
+                snakeLength += 2; // Aumenta o tamanho da cobra
+                generateRandomFood();
+                
+                // Efeito visual na comida
+                comidaDiv.style.transform = 'scale(1.5)';
+                setTimeout(() => comidaDiv.style.transform = 'scale(1)', 150);
+                
+                return true;
             }
         }
+        return false;
+    }
+    
+    // Atualizar corpo da cobra (o rastro segue o dedo)
+    function updateSnakeBody() {
+        if (!fingerPresent) return;
         
-        // Mão fechada (4 dedos fechados) = Pausa
-        if (closedFingers >= 3 && !gamePaused) {
-            gamePaused = true;
-            drawGame();
-        }
-        // Mão aberta (dedos levantados) = Retomar
-        else if (closedFingers <= 1 && gamePaused) {
-            gamePaused = false;
-            drawGame();
+        // Adicionar posição atual do dedo no início do array
+        snakeBody.unshift({ x: currentFingerX, y: currentFingerY });
+        
+        // Manter apenas o tamanho atual da cobra
+        while (snakeBody.length > snakeLength) {
+            snakeBody.pop();
         }
     }
     
-    // Desenhar mãos no canvas overlay
+    // Verificar auto-colisão (se a cabeça encostou no corpo)
+    function checkSelfCollision() {
+        if (snakeBody.length < 10) return false;
+        
+        const head = snakeBody[0];
+        
+        for (let i = 5; i < snakeBody.length; i++) { // Começa do 5 pra ignorar a região da cabeça
+            const segment = snakeBody[i];
+            const dist = Math.hypot(head.x - segment.x, head.y - segment.y);
+            if (dist < 15) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Desenhar tudo
+    function draw() {
+        if (!ctx) return;
+        
+        // Limpar canvas com fade (efeito de rastro legal)
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.2)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Desenhar o caminho da cobra (rastro brilhante)
+        for (let i = 0; i < snakeBody.length; i++) {
+            const segment = snakeBody[i];
+            const opacity = 1 - (i / snakeLength) * 0.7;
+            const size = 16 - (i / snakeLength) * 8;
+            const colorIndex = Math.min(Math.floor(i / 3), snakeColors.length - 1);
+            
+            ctx.beginPath();
+            ctx.arc(segment.x, segment.y, Math.max(size, 6), 0, 2 * Math.PI);
+            
+            // Gradiente radial para cada segmento
+            const gradient = ctx.createRadialGradient(segment.x, segment.y, 0, segment.x, segment.y, size);
+            gradient.addColorStop(0, snakeColors[colorIndex]);
+            gradient.addColorStop(1, '#006600');
+            
+            ctx.fillStyle = gradient;
+            ctx.globalAlpha = opacity;
+            ctx.fill();
+            
+            // Brilho nos segmentos
+            ctx.beginPath();
+            ctx.arc(segment.x, segment.y, size/2, 0, 2 * Math.PI);
+            ctx.fillStyle = '#aaffaa';
+            ctx.globalAlpha = opacity * 0.5;
+            ctx.fill();
+        }
+        
+        ctx.globalAlpha = 1;
+        
+        // Desenhar olhos na cabeça (se existir)
+        if (snakeBody.length > 0) {
+            const head = snakeBody[0];
+            ctx.beginPath();
+            ctx.arc(head.x - 4, head.y - 4, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(head.x + 4, head.y - 4, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(head.x - 4, head.y - 4, 1.5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(head.x + 4, head.y - 4, 1.5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Língua (efeito)
+            ctx.beginPath();
+            ctx.moveTo(head.x, head.y + 2);
+            ctx.lineTo(head.x - 3, head.y + 8);
+            ctx.lineTo(head.x + 3, head.y + 8);
+            ctx.fillStyle = '#ff4444';
+            ctx.fill();
+        }
+        
+        // Desenhar anel ao redor do dedo
+        if (fingerPresent) {
+            ctx.beginPath();
+            ctx.arc(currentFingerX, currentFingerY, 20, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Linha de mira para a comida
+            ctx.beginPath();
+            ctx.moveTo(currentFingerX, currentFingerY);
+            ctx.lineTo(foodX, foodY);
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        // Brilho na comida
+        ctx.beginPath();
+        ctx.arc(foodX, foodY, 15, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fill();
+    }
+    
+    // Desenhar mãos do MediaPipe
     function drawHands(landmarks) {
-        ctx.clearRect(0, 0, width, height);
-        
         if (!landmarks || landmarks.length === 0) {
-            handPresent = false;
+            fingerPresent = false;
             return;
         }
         
-        landmarks.forEach((hand, handIndex) => {
-            const color = 'rgba(0, 255, 0, 0.8)';
+        // Pegar o dedo indicador (ponto 8)
+        const indexFinger = landmarks[0][8];
+        if (indexFinger) {
+            // Converter coordenadas normalizadas para tela (levando em conta espelhamento)
+            let fingerX = indexFinger.x * width;
+            let fingerY = indexFinger.y * height;
             
-            // Desenhar conexões
+            // Inverter X por causa do espelhamento do video
+            fingerX = width - fingerX;
+            
+            currentFingerX = fingerX;
+            currentFingerY = fingerY;
+            fingerPresent = true;
+            
+            // Verificar colisão com comida primeiro
+            checkEat();
+            
+            // Atualizar corpo da cobra
+            updateSnakeBody();
+            
+            // Verificar auto-colisão
+            if (checkSelfCollision() && snakeBody.length > 15) {
+                // Resetar o jogo se colidir (opcional)
+                snakeLength = 5;
+                score = 0;
+                scoreSpan.textContent = score;
+                snakeBody = [];
+                generateRandomFood();
+            }
+        }
+        
+        // Desenhar esqueleto da mão (opcional, pra debug)
+        for (const hand of landmarks) {
             for (const connection of HAND_CONNECTIONS) {
                 const start = hand[connection[0]];
                 const end = hand[connection[1]];
                 if (start && end) {
+                    let startX = start.x * width;
+                    let startY = start.y * height;
+                    let endX = end.x * width;
+                    let endY = end.y * height;
+                    
+                    // Inverter X
+                    startX = width - startX;
+                    endX = width - endX;
+                    
                     ctx.beginPath();
-                    ctx.moveTo(start.x * width, start.y * height);
-                    ctx.lineTo(end.x * width, end.y * height);
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                }
-            }
-            
-            // Desenhar pontos
-            for (let i = 0; i < hand.length; i++) {
-                const x = hand[i].x * width;
-                const y = hand[i].y * height;
-                const isTip = [4, 8, 12, 16, 20].includes(i);
-                const radius = isTip ? 8 : 4;
-                
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = isTip ? '#00ff00' : color;
-                ctx.fill();
-                
-                if (isTip) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius + 2, 0, 2 * Math.PI);
-                    ctx.strokeStyle = '#ffd700';
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             }
-            
-            // Atualizar direção do jogo baseado na mão
-            updateDirectionFromHand(hand);
-            detectHandGesture(hand);
-        });
+        }
         
-        drawGame();
+        draw();
     }
     
     // Inicializar MediaPipe
@@ -601,16 +531,11 @@
         camera.start();
     }
     
-    // Redimensionar
-    function resizeCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvasElement.width = width;
-        canvasElement.height = height;
+    // Loop de animação
+    function animate() {
+        draw();
+        requestAnimationFrame(animate);
     }
-    
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
     
     // Evento de início
     startButton.addEventListener('click', async () => {
@@ -619,32 +544,28 @@
             videoElement.srcObject = stream;
             await new Promise(resolve => videoElement.onloadedmetadata = resolve);
             
+            resizeCanvas();
             initHandTracking();
+            animate();
+            
+            // Iniciar com uma cobra pequena
+            snakeLength = 5;
+            score = 0;
+            scoreSpan.textContent = score;
+            snakeBody = [];
+            generateRandomFood();
+            
             startPanel.classList.add('hidden');
             
-            // Iniciar jogo
-            gameLoop = setInterval(updateGame, 100);
-            drawGame();
         } catch (error) {
             alert('Erro ao acessar câmera. Verifique as permissões.');
         }
     });
     
-    // Controles por teclado também (fallback)
-    document.addEventListener('keydown', (e) => {
-        if (!gameRunning || gamePaused) return;
-        
-        switch(e.key) {
-            case 'ArrowUp': if (direction.y !== 1) nextDirection = {x: 0, y: -1}; break;
-            case 'ArrowDown': if (direction.y !== -1) nextDirection = {x: 0, y: 1}; break;
-            case 'ArrowLeft': if (direction.x !== 1) nextDirection = {x: -1, y: 0}; break;
-            case 'ArrowRight': if (direction.x !== -1) nextDirection = {x: 1, y: 0}; break;
-            case ' ': gamePaused = !gamePaused; drawGame(); break;
-        }
-    });
+    resizeCanvas();
+    updateComidaPosition();
     
-    console.log('🐍 SNAKE JEFF - Controle a cobra com sua mão!');
-    console.log('👊 Mão fechada = PAUSA | ✋ Mão aberta = CONTINUAR');
+    console.log('🐍 SNAKE JEFF - Mova seu dedo indicador! A cobra segue você!');
 </script>
 </body>
 </html>
