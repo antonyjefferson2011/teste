@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Libras Tracker - Reconhecimento de Letras</title>
+    <title>Hand Tracking Lite - Sem Lag</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <!-- MediaPipe Hands CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
         * {
@@ -19,13 +20,14 @@
         body {
             background: #0a0a1a;
             overflow: hidden;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            overflow: hidden;
         }
 
         video {
@@ -36,7 +38,7 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
-            filter: brightness(0.9);
+            filter: brightness(0.9) contrast(1.05);
         }
 
         canvas {
@@ -49,49 +51,12 @@
             pointer-events: none;
         }
 
-        /* Painel da letra reconhecida */
-        .letter-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 60px;
-            padding: 30px 50px;
-            text-align: center;
-            z-index: 20;
-            border: 2px solid #00ffcc;
-            box-shadow: 0 0 50px rgba(0, 255, 204, 0.3);
-            pointer-events: none;
-        }
-
-        .letter-label {
-            font-size: 14px;
-            color: #00ffcc;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .letter-value {
-            font-size: 120px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 0 20px #00ffcc;
-            line-height: 1;
-        }
-
-        .gesture-name {
-            font-size: 16px;
-            color: rgba(255,255,255,0.7);
-            margin-top: 10px;
-        }
-
+        /* Interface minimalista */
         .info {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
             padding: 12px 20px;
             border-radius: 12px;
@@ -106,20 +71,23 @@
         .info span {
             color: #00ffcc;
             font-weight: bold;
+            font-size: 18px;
         }
 
         .fps-counter {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(5px);
             padding: 8px 15px;
             border-radius: 8px;
             color: #0f0;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: bold;
             z-index: 10;
+            pointer-events: none;
         }
 
         .start-panel {
@@ -128,17 +96,17 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(20px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 100;
-            transition: opacity 0.5s;
+            transition: opacity 0.5s ease;
         }
 
         .start-btn {
-            background: linear-gradient(135deg, #00ffcc, #0066ff);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             color: white;
             padding: 18px 48px;
@@ -146,11 +114,13 @@
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
         }
 
         .start-btn:hover {
             transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
         }
 
         .hidden {
@@ -160,15 +130,15 @@
         }
 
         @media (max-width: 768px) {
-            .letter-value { font-size: 80px; }
-            .letter-panel { padding: 20px 40px; }
+            .info { font-size: 10px; padding: 8px 12px; }
+            .info span { font-size: 14px; }
         }
     </style>
 </head>
 <body>
 
 <div id="startPanel" class="start-panel">
-    <button class="start-btn" id="startButton">🤟 ATIVAR CÂMERA</button>
+    <button class="start-btn" id="startButton">🎥 ATIVAR CÂMERA</button>
 </div>
 
 <div class="container">
@@ -176,21 +146,16 @@
     <canvas id="outputCanvas"></canvas>
 </div>
 
-<div class="letter-panel" id="letterPanel">
-    <div class="letter-label">LETRA RECONHECIDA</div>
-    <div class="letter-value" id="recognizedLetter">?</div>
-    <div class="gesture-name" id="gestureName">Aguardando mão...</div>
-</div>
-
 <div class="info">
-    🤟 MÃOS: <span id="handCount">0</span>
+    ✋ MÃOS DETECTADAS: <span id="handCount">0</span>
 </div>
 
-<div class="fps-counter">
+<div class="fps-counter" id="fpsCounter">
     FPS: <span id="fpsValue">0</span>
 </div>
 
 <script>
+    // Elementos DOM
     const videoElement = document.getElementById('inputVideo');
     const canvasElement = document.getElementById('outputCanvas');
     const ctx = canvasElement.getContext('2d');
@@ -198,267 +163,195 @@
     const startButton = document.getElementById('startButton');
     const handCountSpan = document.getElementById('handCount');
     const fpsValueSpan = document.getElementById('fpsValue');
-    const recognizedLetterSpan = document.getElementById('recognizedLetter');
-    const gestureNameSpan = document.getElementById('gestureName');
 
+    // Variáveis de performance
     let width = window.innerWidth;
     let height = window.innerHeight;
     let frameCount = 0;
     let lastFpsUpdate = performance.now();
-    let lastLetter = '?';
-    let stabilityCounter = 0;
+    let lastFrameTime = performance.now();
+    let fps = 0;
+    
+    // Cores para cada mão (fixas e leves)
+    const handColors = [
+        'rgba(0, 255, 200, 0.9)',   // Ciano
+        'rgba(255, 100, 200, 0.9)'   // Rosa
+    ];
 
+    // Configuração do canvas
     function resizeCanvas() {
         width = window.innerWidth;
         height = window.innerHeight;
         canvasElement.width = width;
         canvasElement.height = height;
     }
-    window.addEventListener('resize', resizeCanvas);
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+    });
     resizeCanvas();
 
-    // CORES para desenho
-    const handColors = ['rgba(0, 255, 200, 0.9)', 'rgba(255, 100, 200, 0.9)'];
-
-    // ============================================
-    // LÓGICA DE RECONHECIMENTO DE LIBRAS
-    // ============================================
-    
-    // Verifica se um dedo está esticado (ponta acima da base)
-    function isFingerUp(landmarks, tipIdx, baseIdx) {
-        if (!landmarks[tipIdx] || !landmarks[baseIdx]) return false;
-        // Considera que a mão está com palma para a câmera
-        // Dedo está esticado se a ponta está acima da base (menor Y)
-        return landmarks[tipIdx].y < landmarks[baseIdx].y;
-    }
-
-    // Distância entre dois pontos
-    function getDistance(p1, p2) {
-        return Math.hypot(p1.x - p2.x, p1.y - p2.y);
-    }
-
-    // Reconhece a letra baseado nas posições dos dedos
-    function recognizeLibrasLetter(landmarks) {
-        if (!landmarks || landmarks.length < 21) return { letter: '?', name: 'Mão não detectada' };
-
-        // Índices dos dedos (MediaPipe)
-        // Polegar: 4, Indicador: 8, Médio: 12, Anelar: 16, Mindinho: 20
-        const THUMB_TIP = 4;
-        const THUMB_CMC = 1;
-        const INDEX_TIP = 8;
-        const INDEX_MCP = 5;
-        const MIDDLE_TIP = 12;
-        const MIDDLE_MCP = 9;
-        const RING_TIP = 16;
-        const RING_MCP = 13;
-        const PINKY_TIP = 20;
-        const PINKY_MCP = 17;
-
-        // Verifica quais dedos estão esticados
-        const indexUp = isFingerUp(landmarks, INDEX_TIP, INDEX_MCP);
-        const middleUp = isFingerUp(landmarks, MIDDLE_TIP, MIDDLE_MCP);
-        const ringUp = isFingerUp(landmarks, RING_TIP, RING_MCP);
-        const pinkyUp = isFingerUp(landmarks, PINKY_TIP, PINKY_MCP);
-        const thumbUp = isFingerUp(landmarks, THUMB_TIP, THUMB_CMC);
-
-        // Distâncias importantes
-        const thumbIndexDist = getDistance(landmarks[THUMB_TIP], landmarks[INDEX_TIP]);
-        const thumbMiddleDist = getDistance(landmarks[THUMB_TIP], landmarks[MIDDLE_TIP]);
-        const indexMiddleDist = getDistance(landmarks[INDEX_TIP], landmarks[MIDDLE_TIP]);
-        
-        const fingersUp = [indexUp, middleUp, ringUp, pinkyUp];
-        const upCount = fingersUp.filter(f => f).length;
-
-        // REGRAS DAS LETRAS EM LIBRAS
-        
-        // Letra A: mão fechada, polegar sobre os dedos
-        if (upCount === 0 && thumbUp === false) {
-            return { letter: 'A', name: 'Mão fechada' };
-        }
-        
-        // Letra B: todos os dedos esticados e juntos
-        if (upCount === 4 && thumbUp && indexMiddleDist < 0.05) {
-            return { letter: 'B', name: 'Palma aberta' };
-        }
-        
-        // Letra C: mão em formato de C (polegar e médio formando arco)
-        if (thumbMiddleDist < 0.08 && thumbMiddleDist > 0.02 && !indexUp && !middleUp && !ringUp && !pinkyUp) {
-            return { letter: 'C', name: 'Forma de C' };
-        }
-        
-        // Letra D: só indicador esticado
-        if (indexUp && !middleUp && !ringUp && !pinkyUp && !thumbUp) {
-            return { letter: 'D', name: 'Indicador esticado' };
-        }
-        
-        // Letra E: mão fechada com polegar sobre os outros
-        if (upCount === 0 && thumbUp === false && thumbIndexDist < 0.05) {
-            return { letter: 'E', name: 'Mão fechada com polegar' };
-        }
-        
-        // Letra F: indicador e polegar se tocando
-        if (thumbIndexDist < 0.04 && !middleUp && !ringUp && !pinkyUp) {
-            return { letter: 'F', name: 'Polegar e indicador juntos' };
-        }
-        
-        // Letra I: só mindinho esticado
-        if (pinkyUp && !indexUp && !middleUp && !ringUp && !thumbUp) {
-            return { letter: 'I', name: 'Mindinho esticado' };
-        }
-        
-        // Letra L: polegar e indicador em L
-        if (thumbUp && indexUp && !middleUp && !ringUp && !pinkyUp) {
-            return { letter: 'L', name: 'Polegar e indicador em L' };
-        }
-        
-        // Letra O: indicador e polegar formando círculo
-        if (thumbIndexDist > 0.03 && thumbIndexDist < 0.08 && !middleUp && !ringUp && !pinkyUp) {
-            return { letter: 'O', name: 'Círculo com dedos' };
-        }
-        
-        // Letra R: indicador e médio cruzados/sobrepostos
-        if (indexUp && middleUp && !ringUp && !pinkyUp && indexMiddleDist < 0.04) {
-            return { letter: 'R', name: 'Dois dedos juntos' };
-        }
-        
-        // Letra U: indicador e médio juntos pra cima
-        if (indexUp && middleUp && !ringUp && !pinkyUp && indexMiddleDist < 0.03) {
-            return { letter: 'U', name: 'Indicador e médio unidos' };
-        }
-        
-        // Letra V: indicador e médio em V (separados)
-        if (indexUp && middleUp && !ringUp && !pinkyUp && indexMiddleDist > 0.05) {
-            return { letter: 'V', name: 'V com dois dedos' };
-        }
-        
-        // Letra Y: polegar e mindinho esticados
-        if (thumbUp && pinkyUp && !indexUp && !middleUp && !ringUp) {
-            return { letter: 'Y', name: 'Polegar e mindinho' };
-        }
-        
-        // Letra S: similar ao A
-        if (upCount === 0) {
-            return { letter: 'S', name: 'Mão fechada' };
-        }
-        
-        // Letra T: polegar entre indicador e médio
-        if (thumbUp && !indexUp && !middleUp && !ringUp && !pinkyUp) {
-            return { letter: 'T', name: 'Polegar levantado' };
-        }
-
-        // Reconhecimento de números também
-        if (upCount === 1 && indexUp) return { letter: '1', name: 'Número 1' };
-        if (upCount === 2 && indexUp && middleUp) return { letter: '2', name: 'Número 2' };
-        if (upCount === 3 && indexUp && middleUp && ringUp) return { letter: '3', name: 'Número 3' };
-        if (upCount === 4) return { letter: '4', name: 'Número 4' };
-        
-        // Gestos padrão
-        if (upCount === 0) return { letter: '✊', name: 'Punho' };
-        if (upCount === 5) return { letter: '🖐️', name: 'Mão aberta' };
-        
-        return { letter: '?', name: 'Gesto não reconhecido' };
-    }
-
-    // Desenha as mãos na tela
+    // Função otimizada para desenhar apenas as mãos
     function drawHands(landmarks) {
-        if (!landmarks || landmarks.length === 0) {
-            ctx.clearRect(0, 0, width, height);
-            return;
-        }
+        if (!landmarks || landmarks.length === 0) return;
         
+        // Limpa o canvas de forma eficiente
         ctx.clearRect(0, 0, width, height);
         
+        // Desenha cada mão
         landmarks.forEach((hand, handIndex) => {
             const color = handColors[handIndex % handColors.length];
             
-            // Desenha as conexões
+            // Desenha as conexões (ossos) da mão
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Usa as conexões padrão do MediaPipe
             for (const connection of HAND_CONNECTIONS) {
                 const start = hand[connection[0]];
                 const end = hand[connection[1]];
+                
                 if (start && end) {
+                    const startX = start.x * width;
+                    const startY = start.y * height;
+                    const endX = end.x * width;
+                    const endY = end.y * height;
+                    
                     ctx.beginPath();
-                    ctx.moveTo(start.x * width, start.y * height);
-                    ctx.lineTo(end.x * width, end.y * height);
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2.5;
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
                     ctx.stroke();
                 }
             }
             
-            // Desenha os pontos
+            // Desenha os pontos (articulações)
             for (let i = 0; i < hand.length; i++) {
-                const x = hand[i].x * width;
-                const y = hand[i].y * height;
+                const landmark = hand[i];
+                const x = landmark.x * width;
+                const y = landmark.y * height;
+                
+                // Pontos das pontas dos dedos maiores
                 const isTip = [4, 8, 12, 16, 20].includes(i);
-                const radius = isTip ? 5 : 2.5;
+                const radius = isTip ? 6 : 3;
                 
                 ctx.beginPath();
                 ctx.arc(x, y, radius, 0, 2 * Math.PI);
                 ctx.fillStyle = isTip ? '#ffffff' : color;
                 ctx.fill();
+                
+                // Borda nos pontos principais
+                if (isTip) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius + 1, 0, 2 * Math.PI);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
             }
         });
     }
 
-    // Atualiza a UI com a letra reconhecida
-    function updateLetterDisplay(letter, gestureName) {
-        if (letter !== lastLetter) {
-            stabilityCounter++;
-            if (stabilityCounter > 3) { // Estabiliza para não ficar piscando
-                lastLetter = letter;
-                recognizedLetterSpan.textContent = letter;
-                gestureNameSpan.textContent = gestureName;
-                stabilityCounter = 0;
-            }
-        } else {
-            stabilityCounter = 0;
+    // Função para detectar gesto simples (aberto/fechado)
+    function detectSimpleGesture(hand) {
+        if (!hand || hand.length < 21) return '';
+        
+        // Pega posição das pontas dos dedos e base
+        const thumbTip = hand[4];
+        const indexTip = hand[8];
+        const middleTip = hand[12];
+        const ringTip = hand[16];
+        const pinkyTip = hand[20];
+        
+        const palmBase = hand[0];
+        
+        // Verifica se dedos estão estendidos (comparando Y, considerando que a mão pode estar em qualquer orientação)
+        // Simplificação: verifica se a ponta está acima da base (em Y) - funciona bem para maioria das posições
+        const fingersUp = [
+            thumbTip.y < hand[3].y,     // Polegar
+            indexTip.y < hand[6].y,     // Indicador
+            middleTip.y < hand[10].y,   // Médio
+            ringTip.y < hand[14].y,     // Anelar
+            pinkyTip.y < hand[18].y     // Mindinho
+        ];
+        
+        const upCount = fingersUp.filter(up => up).length;
+        
+        if (upCount >= 4) return '🖐️ ABERTA';
+        if (upCount <= 1) return '✊ FECHADA';
+        return '🤏 PARCIAL';
+    }
+
+    // Atualiza informações na UI
+    function updateUI(hands) {
+        const count = hands ? hands.length : 0;
+        handCountSpan.textContent = count;
+        
+        if (count > 0 && hands[0]) {
+            const gesture = detectSimpleGesture(hands[0]);
+            // Opcional: mostrar gesto se quiser
+            // document.getElementById('gesture').textContent = gesture;
         }
     }
 
-    // Loop de FPS
+    // Atualiza contador de FPS
     function updateFPS() {
         frameCount++;
         const now = performance.now();
-        if (now - lastFpsUpdate >= 1000) {
-            fpsValueSpan.textContent = frameCount;
+        const delta = now - lastFpsUpdate;
+        
+        if (delta >= 1000) {
+            fps = frameCount;
+            fpsValueSpan.textContent = fps;
             frameCount = 0;
             lastFpsUpdate = now;
         }
     }
 
-    // Inicialização do MediaPipe
+    // Inicializa o MediaPipe Hands
     function initHandTracking() {
         const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-
-        hands.setOptions({
-            maxNumHands: 1,  // Só precisa de 1 mão para Libras
-            modelComplexity: 0,  // Mais leve
-            minDetectionConfidence: 0.6,
-            minTrackingConfidence: 0.5
-        });
-
-        hands.onResults((results) => {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const hand = results.multiHandLandmarks[0];
-                drawHands(results.multiHandLandmarks);
-                
-                // Reconhece a letra da primeira mão
-                const result = recognizeLibrasLetter(hand);
-                updateLetterDisplay(result.letter, result.name);
-                handCountSpan.textContent = results.multiHandLandmarks.length;
-            } else {
-                ctx.clearRect(0, 0, width, height);
-                handCountSpan.textContent = 0;
-                updateLetterDisplay('?', 'Nenhuma mão detectada');
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
             }
+        });
+
+        // Configuração OTIMIZADA para menor latência
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 0,        // Menos complexo = mais rápido (0 = Lite, 1 = Full)
+            minDetectionConfidence: 0.5,  // Menor confiança = detecção mais rápida
+            minTrackingConfidence: 0.5    // Menor confiança = tracking mais rápido
+        });
+
+        // Callback quando as mãos são detectadas
+        hands.onResults((results) => {
+            const now = performance.now();
+            const frameTime = now - lastFrameTime;
+            lastFrameTime = now;
+            
+            if (results.multiHandLandmarks) {
+                // Desenha as mãos
+                drawHands(results.multiHandLandmarks);
+                // Atualiza UI
+                updateUI(results.multiHandLandmarks);
+            } else {
+                // Limpa o canvas se não houver mãos
+                ctx.clearRect(0, 0, width, height);
+                updateUI([]);
+            }
+            
             updateFPS();
         });
 
+        // Configura a câmera
         const camera = new Camera(videoElement, {
-            onFrame: async () => await hands.send({ image: videoElement }),
-            width: 640,
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: 640,    // Resolução menor = mais performance
             height: 480,
             facingMode: 'user'
         });
@@ -469,15 +362,31 @@
     // Evento de início
     startButton.addEventListener('click', async () => {
         try {
+            // Verifica permissão da câmera
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoElement.srcObject = stream;
-            await new Promise(resolve => videoElement.onloadedmetadata = resolve);
+            
+            // Aguarda o vídeo carregar
+            await new Promise((resolve) => {
+                videoElement.onloadedmetadata = () => {
+                    resolve();
+                };
+            });
+            
+            // Inicia o tracking
             initHandTracking();
+            
+            // Esconde o painel de início
             startPanel.classList.add('hidden');
+            
         } catch (error) {
-            alert('Erro ao acessar câmera. Verifique as permissões.');
+            console.error('Erro ao acessar câmera:', error);
+            alert('Não foi possível acessar a câmera. Verifique as permissões.');
         }
     });
+
+    // Pré-carregamento para melhor experiência
+    console.log('Hand Tracking Lite - Pronto para iniciar');
 </script>
 </body>
 </html>
