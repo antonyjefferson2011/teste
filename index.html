@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Berço de Gato — Cordas de Luz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Berço de Gato — Cordas de Luz (CORRIGIDO)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
@@ -83,10 +83,7 @@
     font-weight: 900;
     letter-spacing: 0.25em;
     color: #00f5ff;
-    text-shadow:
-      0 0 10px #00f5ff,
-      0 0 30px #00f5ff88,
-      0 0 60px #00f5ff44;
+    text-shadow: 0 0 10px #00f5ff, 0 0 30px #00f5ff88, 0 0 60px #00f5ff44;
     white-space: nowrap;
   }
 
@@ -185,13 +182,6 @@
     box-shadow: 0 0 40px #ff00ff99;
     transform: scale(1.05);
   }
-
-  .grid-line {
-    position: absolute;
-    background: rgba(0, 245, 255, 0.04);
-  }
-  .grid-h { width: 100%; height: 1px; left: 0; }
-  .grid-v { height: 100%; width: 1px; top: 0; }
 </style>
 </head>
 <body>
@@ -211,16 +201,10 @@
   </div>
 
   <div id="permission-screen">
-    <!-- grid decoration -->
-    <div class="grid-line grid-h" style="top:25%"></div>
-    <div class="grid-line grid-h" style="top:75%"></div>
-    <div class="grid-line grid-v" style="left:25%"></div>
-    <div class="grid-line grid-v" style="left:75%"></div>
-
     <h1>BERÇO DE GATO</h1>
     <p>Uma experiência de realidade aumentada que transforma seus movimentos em cordas de luz neônicas.</p>
     <p style="color:#ff00ff88; font-size:12px;">Requer acesso à câmera</p>
-    <button id="start-btn" onclick="startExperience()">INICIAR ▶</button>
+    <button id="start-btn">INICIAR ▶</button>
   </div>
 </div>
 
@@ -243,12 +227,9 @@ let particles = [];
 let lastTime = performance.now();
 let frameCount = 0;
 let fps = 60;
-let offscreenCam, offCtx; // for silhouette rendering
 
 // Fingertip landmark indices
 const FINGERTIPS = [4, 8, 12, 16, 20];
-// All landmarks
-const ALL_LANDMARKS = Array.from({length: 21}, (_, i) => i);
 
 // Color palette
 const COLORS = {
@@ -263,10 +244,6 @@ const COLORS = {
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
-  offscreenCam = document.createElement('canvas');
-  offscreenCam.width = W;
-  offscreenCam.height = H;
-  offCtx = offscreenCam.getContext('2d');
 }
 window.addEventListener('resize', resize);
 resize();
@@ -310,7 +287,6 @@ function spawnExplosion(x, y, color) {
 
 // ─── Drawing helpers ─────────────────────────────────────────────────────────
 function lerpColor(a, b, t) {
-  // a, b: [r,g,b], t: 0-1
   return [
     Math.round(a[0] + (b[0] - a[0]) * t),
     Math.round(a[1] + (b[1] - a[1]) * t),
@@ -386,7 +362,7 @@ function drawLaserString(ctx, x1, y1, x2, y2, dist, maxDist) {
     ctx.lineWidth = layer.width;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    // Slight curve using midpoint offset
+    // Slight curve for organic feel
     const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * dist * 0.03;
     const my = (y1 + y2) / 2 + (Math.random() - 0.5) * dist * 0.03;
     ctx.moveTo(x1, y1);
@@ -399,7 +375,6 @@ function drawLaserString(ctx, x1, y1, x2, y2, dist, maxDist) {
 }
 
 function drawHandSkeleton(ctx, landmarks, color) {
-  // Connections
   const connections = [
     [0,1],[1,2],[2,3],[3,4],       // thumb
     [0,5],[5,6],[6,7],[7,8],       // index
@@ -409,10 +384,10 @@ function drawHandSkeleton(ctx, landmarks, color) {
     [0,17]                          // palm base
   ];
   ctx.save();
-  ctx.strokeStyle = color + '44';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = color + '66';
+  ctx.lineWidth = 1.5;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 6;
+  ctx.shadowBlur = 8;
   for (const [a, b] of connections) {
     const pa = landmarks[a];
     const pb = landmarks[b];
@@ -424,9 +399,13 @@ function drawHandSkeleton(ctx, landmarks, color) {
   ctx.restore();
 }
 
+// CORREÇÃO AQUI! Função que inverte a coordenada X (espelhamento)
+function mirrorX(x) {
+  return 1 - x; // Inverte a coordenada normalizada (0-1)
+}
+
 // ─── Main draw loop ───────────────────────────────────────────────────────────
-let prevTipPositions = {}; // for touch detection debounce
-const touchCooldowns = {};
+let touchCooldowns = {};
 
 function draw(timestamp) {
   requestAnimationFrame(draw);
@@ -440,14 +419,11 @@ function draw(timestamp) {
     fpsEl.textContent = `FPS: ${fps}`;
   }
 
-  // Clear
-  ctx.clearRect(0, 0, W, H);
-
-  // Draw background — deep midnight blue
+  // Clear - fundo escuro
   ctx.fillStyle = '#020818';
   ctx.fillRect(0, 0, W, H);
 
-  // Draw subtle grid
+  // Grid sutil
   ctx.save();
   ctx.strokeStyle = 'rgba(0,245,255,0.03)';
   ctx.lineWidth = 1;
@@ -460,89 +436,87 @@ function draw(timestamp) {
   }
   ctx.restore();
 
-  // Draw camera silhouette (dark blue-tinted)
-  if (video.readyState >= 2) {
-    offCtx.clearRect(0, 0, W, H);
-    offCtx.save();
-    offCtx.translate(W, 0);
-    offCtx.scale(-1, 1);
-    offCtx.drawImage(video, 0, 0, W, H);
-    offCtx.restore();
-    // Tint the camera frame dark
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.drawImage(offscreenCam, 0, 0);
-    ctx.globalAlpha = 1;
-    // Dark overlay
-    ctx.fillStyle = 'rgba(2,8,24,0.55)';
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-  }
-
   const hands = handsData;
   handsCountEl.textContent = `MÃOS: ${hands.length}`;
 
-  // Categorize hands
+  // Identificar mãos (com correção de handedness devido ao espelhamento)
   let leftHand = null, rightHand = null;
   for (const h of hands) {
-    // MediaPipe labels are from the camera's perspective (mirrored)
+    // Como a imagem é espelhada, a mão esquerda do usuário aparece como direita
     if (h.handedness === 'Left') rightHand = h;
     else leftHand = h;
   }
 
-  // Draw skeletons
-  if (leftHand) drawHandSkeleton(ctx, leftHand.landmarks, '#00f5ff');
-  if (rightHand) drawHandSkeleton(ctx, rightHand.landmarks, '#ff00ff');
-
-  // Draw landmark dots
-  for (const h of hands) {
-    const isTip = (i) => FINGERTIPS.includes(i);
-    const color = h.handedness === 'Left' ? '#ff00ff' : '#00f5ff';
-    for (let i = 0; i < h.landmarks.length; i++) {
-      const lm = h.landmarks[i];
+  // Desenhar esqueletos e pontos (com coordenadas corrigidas)
+  if (leftHand) {
+    const correctedLandmarks = leftHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
+    drawHandSkeleton(ctx, correctedLandmarks, '#00f5ff');
+    
+    // Desenhar pontos das articulações
+    for (let i = 0; i < correctedLandmarks.length; i++) {
+      const lm = correctedLandmarks[i];
       const x = lm.x * W;
       const y = lm.y * H;
-      const r = isTip(i) ? 7 : 4;
-      const glow = isTip(i) ? 24 : 12;
-      drawGlowDot(ctx, x, y, r, isTip(i) ? color : color + 'aa', glow);
+      const isTip = FINGERTIPS.includes(i);
+      const r = isTip ? 7 : 4;
+      const glow = isTip ? 24 : 12;
+      drawGlowDot(ctx, x, y, r, '#00f5ff', glow);
     }
   }
 
-  // Draw strings between hands
+  if (rightHand) {
+    const correctedLandmarks = rightHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
+    drawHandSkeleton(ctx, correctedLandmarks, '#ff00ff');
+    
+    for (let i = 0; i < correctedLandmarks.length; i++) {
+      const lm = correctedLandmarks[i];
+      const x = lm.x * W;
+      const y = lm.y * H;
+      const isTip = FINGERTIPS.includes(i);
+      const r = isTip ? 7 : 4;
+      const glow = isTip ? 24 : 12;
+      drawGlowDot(ctx, x, y, r, '#ff00ff', glow);
+    }
+  }
+
+  // Desenhar cordas entre as mãos (AGORA CORRIGIDO)
   if (leftHand && rightHand) {
+    const leftLm = leftHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
+    const rightLm = rightHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
+    
     for (let fi = 0; fi < FINGERTIPS.length; fi++) {
       const li = FINGERTIPS[fi];
-      const lLm = leftHand.landmarks[li];
-      const rLm = rightHand.landmarks[li];
+      const lPoint = leftLm[li];
+      const rPoint = rightLm[li];
 
-      const lx = lLm.x * W, ly = lLm.y * H;
-      const rx = rLm.x * W, ry = rLm.y * H;
+      const lx = lPoint.x * W, ly = lPoint.y * H;
+      const rx = rPoint.x * W, ry = rPoint.y * H;
 
       const dist = Math.hypot(rx - lx, ry - ly);
       const maxDist = Math.hypot(W, H) * 0.8;
 
       const color = drawLaserString(ctx, lx, ly, rx, ry, dist, maxDist);
 
-      // Touch detection
+      // Detectar toque entre dedos
       const key = `tip_${fi}`;
       if (!touchCooldowns[key]) touchCooldowns[key] = 0;
 
-      if (dist < 40 && touchCooldowns[key] <= 0) {
+      if (dist < 45 && touchCooldowns[key] <= 0) {
         spawnExplosion((lx + rx) / 2, (ly + ry) / 2, color);
-        touchCooldowns[key] = 30; // frames cooldown
+        touchCooldowns[key] = 25;
       }
       if (touchCooldowns[key] > 0) touchCooldowns[key]--;
     }
   }
 
-  // Update + draw particles
+  // Atualizar + desenhar partículas
   particles = particles.filter(p => p.life > 0);
   for (const p of particles) {
     p.update();
     p.draw(ctx);
   }
 
-  // Status message
+  // Mensagem de status
   if (hands.length === 0) {
     statusEl.textContent = 'MOSTRE SUAS MÃOS PARA A CÂMERA';
   } else if (hands.length === 1) {
@@ -596,6 +570,9 @@ function startExperience() {
 
   requestAnimationFrame(draw);
 }
+
+// Botão de iniciar
+document.getElementById('start-btn').addEventListener('click', startExperience);
 </script>
 </body>
 </html>
