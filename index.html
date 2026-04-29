@@ -1,578 +1,165 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Berço de Gato — Cordas de Luz (CORRIGIDO)</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>naruto</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #020818;
-    font-family: 'Share Tech Mono', monospace;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  #container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  /* Hidden video element — only used as source for MediaPipe */
-  #inputVideo {
-    display: none;
-  }
-
-  /* Main canvas covers full screen */
-  #mainCanvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-  }
-
-  /* CRT scanline overlay */
-  #scanlines {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 3px,
-      rgba(0,0,0,0.18) 3px,
-      rgba(0,0,0,0.18) 4px
-    );
-    z-index: 10;
-  }
-
-  /* Vignette */
-  #vignette {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    background: radial-gradient(ellipse at center,
-      transparent 50%,
-      rgba(2, 8, 24, 0.85) 100%
-    );
-    z-index: 11;
-  }
-
-  /* UI overlay */
-  #ui {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 20;
-  }
-
-  #title {
-    position: absolute;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(14px, 2.5vw, 22px);
-    font-weight: 900;
-    letter-spacing: 0.25em;
-    color: #00f5ff;
-    text-shadow: 0 0 10px #00f5ff, 0 0 30px #00f5ff88, 0 0 60px #00f5ff44;
-    white-space: nowrap;
-  }
-
-  #subtitle {
-    position: absolute;
-    top: 58px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: clamp(9px, 1.2vw, 12px);
-    color: #00f5ff88;
-    letter-spacing: 0.4em;
-    white-space: nowrap;
-  }
-
-  #status {
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    color: #ffffff55;
-    letter-spacing: 0.2em;
-    text-align: center;
-  }
-
-  #hands-count {
-    position: absolute;
-    top: 24px;
-    right: 28px;
-    font-size: 10px;
-    color: #ff00ff88;
-    letter-spacing: 0.2em;
-  }
-
-  #fps-display {
-    position: absolute;
-    top: 24px;
-    left: 28px;
-    font-size: 10px;
-    color: #00ff8888;
-    letter-spacing: 0.2em;
-  }
-
-  /* Permission overlay */
-  #permission-screen {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #020818;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    gap: 20px;
-  }
-
-  #permission-screen h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(20px, 4vw, 36px);
-    font-weight: 900;
-    color: #00f5ff;
-    text-shadow: 0 0 20px #00f5ff, 0 0 60px #00f5ff55;
-    letter-spacing: 0.2em;
-    text-align: center;
-  }
-
-  #permission-screen p {
-    color: #ffffff88;
-    font-size: 14px;
-    letter-spacing: 0.15em;
-    max-width: 420px;
-    text-align: center;
-    line-height: 1.8;
-  }
-
-  #start-btn {
-    margin-top: 20px;
-    padding: 16px 48px;
-    font-family: 'Orbitron', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.3em;
-    color: #020818;
-    background: #00f5ff;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
-    transition: all 0.2s;
-    box-shadow: 0 0 30px #00f5ff88;
-  }
-
-  #start-btn:hover {
-    background: #ff00ff;
-    box-shadow: 0 0 40px #ff00ff99;
-    transform: scale(1.05);
-  }
-</style>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: black; }
+    #v_src, #out {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover; transform: scaleX(-1);
+    }
+    #out { z-index: 2; pointer-events: none; }
+    .darkness {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(10, 5, 0, 0.3);
+      mix-blend-mode: multiply; pointer-events: none; z-index: 5;
+    }
+    .fx {
+      position: absolute; height: auto; top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none; display: none;
+      mix-blend-mode: screen; z-index: 20;
+    }
+    #n { width: 1600px; }
+    #s { width: 2400px; }
+  </style>
 </head>
 <body>
 
-<div id="container">
-  <video id="inputVideo" playsinline></video>
-  <canvas id="mainCanvas"></canvas>
-  <div id="scanlines"></div>
-  <div id="vignette"></div>
+  <video id="v_src" autoplay playsinline></video>
+  <canvas id="out"></canvas>
+  <div class="darkness"></div>
 
-  <div id="ui">
-    <div id="title">✦ BERÇO DE GATO ✦</div>
-    <div id="subtitle">CORDAS DE LUZ INTERATIVAS</div>
-    <div id="fps-display">FPS: --</div>
-    <div id="hands-count">MÃOS: 0</div>
-    <div id="status">APROXIME AS MÃOS PARA CRIAR CORDAS DE LUZ</div>
-  </div>
+  <video id="n" class="fx" src="assets/naruto.mp4" muted autoplay loop playsinline></video>
+  <video id="s" class="fx" src="assets/sasuke.mp4" muted autoplay loop playsinline></video>
 
-  <div id="permission-screen">
-    <h1>BERÇO DE GATO</h1>
-    <p>Uma experiência de realidade aumentada que transforma seus movimentos em cordas de luz neônicas.</p>
-    <p style="color:#ff00ff88; font-size:12px;">Requer acesso à câmera</p>
-    <button id="start-btn">INICIAR ▶</button>
-  </div>
-</div>
+  <script>
+    const vElement = document.getElementById('v_src');
+    const cElement = document.getElementById('out');
+    const ctx = cElement.getContext('2d');
+    const n = document.getElementById('n');
+    const s = document.getElementById('s');
 
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    let pwr = [0, 0]; 
+    let wasOpen = [false, false];
 
-<script>
-// ─── State ────────────────────────────────────────────────────────────────────
-const canvas = document.getElementById('mainCanvas');
-const ctx = canvas.getContext('2d');
-const video = document.getElementById('inputVideo');
-const statusEl = document.getElementById('status');
-const fpsEl = document.getElementById('fps-display');
-const handsCountEl = document.getElementById('hands-count');
-
-let W, H;
-let handsData = [];
-let particles = [];
-let lastTime = performance.now();
-let frameCount = 0;
-let fps = 60;
-
-// Fingertip landmark indices
-const FINGERTIPS = [4, 8, 12, 16, 20];
-
-// Color palette
-const COLORS = {
-  cyan: '#00f5ff',
-  magenta: '#ff00ff',
-  yellow: '#ffe600',
-  green: '#00ff88',
-  red: '#ff3366',
-};
-
-// ─── Resize ──────────────────────────────────────────────────────────────────
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// ─── Particle system ─────────────────────────────────────────────────────────
-class Particle {
-  constructor(x, y, color) {
-    this.x = x; this.y = y;
-    this.vx = (Math.random() - 0.5) * 8;
-    this.vy = (Math.random() - 0.5) * 8;
-    this.life = 1.0;
-    this.decay = 0.02 + Math.random() * 0.03;
-    this.size = 2 + Math.random() * 5;
-    this.color = color;
-  }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vx *= 0.92;
-    this.vy *= 0.92;
-    this.life -= this.decay;
-  }
-  draw(ctx) {
-    ctx.save();
-    ctx.globalAlpha = this.life;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-function spawnExplosion(x, y, color) {
-  for (let i = 0; i < 28; i++) {
-    particles.push(new Particle(x, y, color));
-  }
-}
-
-// ─── Drawing helpers ─────────────────────────────────────────────────────────
-function lerpColor(a, b, t) {
-  return [
-    Math.round(a[0] + (b[0] - a[0]) * t),
-    Math.round(a[1] + (b[1] - a[1]) * t),
-    Math.round(a[2] + (b[2] - a[2]) * t),
-  ];
-}
-
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3), 16);
-  const g = parseInt(hex.slice(3,5), 16);
-  const b = parseInt(hex.slice(5,7), 16);
-  return [r, g, b];
-}
-
-function rgbStr(arr, a = 1) {
-  return `rgba(${arr[0]},${arr[1]},${arr[2]},${a})`;
-}
-
-function drawGlowDot(ctx, x, y, r, color, glowSize = 18) {
-  ctx.save();
-  ctx.shadowColor = color;
-  ctx.shadowBlur = glowSize;
-  // Outer glow ring
-  ctx.beginPath();
-  ctx.arc(x, y, r + 3, 0, Math.PI * 2);
-  ctx.fillStyle = rgbStr(hexToRgb(color), 0.15);
-  ctx.fill();
-  // Core dot
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  // White hot center
-  ctx.shadowBlur = 4;
-  ctx.beginPath();
-  ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawLaserString(ctx, x1, y1, x2, y2, dist, maxDist) {
-  const t = Math.min(dist / maxDist, 1);
-
-  // Color: cyan → magenta → yellow
-  const cCyan = hexToRgb('#00f5ff');
-  const cMag  = hexToRgb('#ff00ff');
-  const cYel  = hexToRgb('#ffe600');
-
-  let colorArr;
-  if (t < 0.5) {
-    colorArr = lerpColor(cCyan, cMag, t * 2);
-  } else {
-    colorArr = lerpColor(cMag, cYel, (t - 0.5) * 2);
-  }
-  const color = `rgb(${colorArr[0]},${colorArr[1]},${colorArr[2]})`;
-
-  const thickness = Math.max(1, 3 - t * 2);
-
-  // Glow layers
-  const layers = [
-    { blur: 30, alpha: 0.15, width: thickness * 6 },
-    { blur: 15, alpha: 0.35, width: thickness * 3 },
-    { blur:  6, alpha: 0.7,  width: thickness * 1.5 },
-    { blur:  0, alpha: 1.0,  width: thickness },
-  ];
-
-  for (const layer of layers) {
-    ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = layer.blur;
-    ctx.strokeStyle = `rgba(${colorArr[0]},${colorArr[1]},${colorArr[2]},${layer.alpha})`;
-    ctx.lineWidth = layer.width;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    // Slight curve for organic feel
-    const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * dist * 0.03;
-    const my = (y1 + y2) / 2 + (Math.random() - 0.5) * dist * 0.03;
-    ctx.moveTo(x1, y1);
-    ctx.quadraticCurveTo(mx, my, x2, y2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  return color;
-}
-
-function drawHandSkeleton(ctx, landmarks, color) {
-  const connections = [
-    [0,1],[1,2],[2,3],[3,4],       // thumb
-    [0,5],[5,6],[6,7],[7,8],       // index
-    [5,9],[9,10],[10,11],[11,12],  // middle
-    [9,13],[13,14],[14,15],[15,16],// ring
-    [13,17],[17,18],[18,19],[19,20],// pinky
-    [0,17]                          // palm base
-  ];
-  ctx.save();
-  ctx.strokeStyle = color + '66';
-  ctx.lineWidth = 1.5;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
-  for (const [a, b] of connections) {
-    const pa = landmarks[a];
-    const pb = landmarks[b];
-    ctx.beginPath();
-    ctx.moveTo(pa.x * W, pa.y * H);
-    ctx.lineTo(pb.x * W, pb.y * H);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// CORREÇÃO AQUI! Função que inverte a coordenada X (espelhamento)
-function mirrorX(x) {
-  return 1 - x; // Inverte a coordenada normalizada (0-1)
-}
-
-// ─── Main draw loop ───────────────────────────────────────────────────────────
-let touchCooldowns = {};
-
-function draw(timestamp) {
-  requestAnimationFrame(draw);
-
-  // FPS
-  frameCount++;
-  if (timestamp - lastTime >= 1000) {
-    fps = frameCount;
-    frameCount = 0;
-    lastTime = timestamp;
-    fpsEl.textContent = `FPS: ${fps}`;
-  }
-
-  // Clear - fundo escuro
-  ctx.fillStyle = '#020818';
-  ctx.fillRect(0, 0, W, H);
-
-  // Grid sutil
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0,245,255,0.03)';
-  ctx.lineWidth = 1;
-  const gridSize = 60;
-  for (let x = 0; x < W; x += gridSize) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
-  for (let y = 0; y < H; y += gridSize) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  }
-  ctx.restore();
-
-  const hands = handsData;
-  handsCountEl.textContent = `MÃOS: ${hands.length}`;
-
-  // Identificar mãos (com correção de handedness devido ao espelhamento)
-  let leftHand = null, rightHand = null;
-  for (const h of hands) {
-    // Como a imagem é espelhada, a mão esquerda do usuário aparece como direita
-    if (h.handedness === 'Left') rightHand = h;
-    else leftHand = h;
-  }
-
-  // Desenhar esqueletos e pontos (com coordenadas corrigidas)
-  if (leftHand) {
-    const correctedLandmarks = leftHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
-    drawHandSkeleton(ctx, correctedLandmarks, '#00f5ff');
-    
-    // Desenhar pontos das articulações
-    for (let i = 0; i < correctedLandmarks.length; i++) {
-      const lm = correctedLandmarks[i];
-      const x = lm.x * W;
-      const y = lm.y * H;
-      const isTip = FINGERTIPS.includes(i);
-      const r = isTip ? 7 : 4;
-      const glow = isTip ? 24 : 12;
-      drawGlowDot(ctx, x, y, r, '#00f5ff', glow);
+    function checkOpen(pts) {
+        let count = 0;
+        const wrist = pts[0];
+        const tips = [8, 12, 16, 20];
+        const pips = [6, 10, 14, 18];
+        for (let i = 0; i < tips.length; i++) {
+            const tip = pts[tips[i]];
+            const pip = pts[pips[i]];
+            if (Math.hypot(tip.x - wrist.x, tip.y - wrist.y) > Math.hypot(pip.x - wrist.x, pip.y - wrist.y)) count++;
+        }
+        return count >= 3;
     }
-  }
 
-  if (rightHand) {
-    const correctedLandmarks = rightHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
-    drawHandSkeleton(ctx, correctedLandmarks, '#ff00ff');
-    
-    for (let i = 0; i < correctedLandmarks.length; i++) {
-      const lm = correctedLandmarks[i];
-      const x = lm.x * W;
-      const y = lm.y * H;
-      const isTip = FINGERTIPS.includes(i);
-      const r = isTip ? 7 : 4;
-      const glow = isTip ? 24 : 12;
-      drawGlowDot(ctx, x, y, r, '#ff00ff', glow);
+    function onResults(res) {
+        cElement.width = vElement.videoWidth;
+        cElement.height = vElement.videoHeight;
+        ctx.save();
+        ctx.clearRect(0, 0, cElement.width, cElement.height);
+
+        let fL = false;
+        let fR = false;
+
+        n.style.display = 'none';
+        s.style.display = 'none';
+
+        if (res.multiHandLandmarks && res.multiHandedness) {
+            res.multiHandLandmarks.forEach((pts, i) => {
+                const label = res.multiHandedness[i].label;
+                const isR = label === 'Right';
+                const idx = isR ? 1 : 0;
+
+                // --- BRIGHT BLUE SKELETON ---
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00fbff';
+                drawConnectors(ctx, pts, HAND_CONNECTIONS, {color: '#00d4ff', lineWidth: 3});
+                drawLandmarks(ctx, pts, {color: '#ffffff', lineWidth: 1, radius: 2});
+                ctx.restore();
+
+                const open = checkOpen(pts);
+                pwr[idx] += open ? 0.05 : -0.15;
+                pwr[idx] = Math.max(0, Math.min(1, pwr[idx]));
+
+                if (open && !wasOpen[idx]) {
+                    const vid = isR ? s : n;
+                    vid.currentTime = 0;
+                    vid.play();
+                }
+                wasOpen[idx] = open;
+
+                const wrist = pts[0];
+                const knk = pts[9];
+
+                if (pwr[idx] > 0.01) {
+                    if (isR) { 
+                        fR = true;
+                        const tx = (wrist.x + knk.x) / 2;
+                        const ty = (wrist.y + knk.y) / 2;
+                        s.style.left = `${(1 - tx) * window.innerWidth}px`;
+                        s.style.top = `${ty * window.innerHeight}px`;
+                        s.style.display = 'block';
+                        s.style.opacity = pwr[idx]; 
+                    } else { 
+                        fL = true;
+                        const dx = knk.x - wrist.x;
+                        const dy = knk.y - wrist.y;
+                        const tx = knk.x + (dx * 0.8);
+                        const ty = knk.y + (dy * 0.8);
+                        n.style.left = `${(1 - tx) * window.innerWidth}px`;
+                        n.style.top = `${(ty * window.innerHeight) - 120}px`;
+                        n.style.display = 'block';
+                        n.style.opacity = pwr[idx]; 
+                    }
+                }
+            });
+        }
+
+        if (!fL) {
+            pwr[0] = Math.max(0, pwr[0] - 0.15);
+            if (pwr[0] > 0.01) { n.style.display = 'block'; n.style.opacity = pwr[0]; }
+            wasOpen[0] = false;
+        }
+        if (!fR) {
+            pwr[1] = Math.max(0, pwr[1] - 0.15);
+            if (pwr[1] > 0.01) { s.style.display = 'block'; s.style.opacity = pwr[1]; }
+            wasOpen[1] = false;
+        }
+        ctx.restore();
     }
-  }
 
-  // Desenhar cordas entre as mãos (AGORA CORRIGIDO)
-  if (leftHand && rightHand) {
-    const leftLm = leftHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
-    const rightLm = rightHand.landmarks.map(lm => ({ ...lm, x: mirrorX(lm.x) }));
-    
-    for (let fi = 0; fi < FINGERTIPS.length; fi++) {
-      const li = FINGERTIPS[fi];
-      const lPoint = leftLm[li];
-      const rPoint = rightLm[li];
+    const h = new Hands({
+        locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+    });
 
-      const lx = lPoint.x * W, ly = lPoint.y * H;
-      const rx = rPoint.x * W, ry = rPoint.y * H;
+    h.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65
+    });
 
-      const dist = Math.hypot(rx - lx, ry - ly);
-      const maxDist = Math.hypot(W, H) * 0.8;
+    h.onResults(onResults);
 
-      const color = drawLaserString(ctx, lx, ly, rx, ry, dist, maxDist);
-
-      // Detectar toque entre dedos
-      const key = `tip_${fi}`;
-      if (!touchCooldowns[key]) touchCooldowns[key] = 0;
-
-      if (dist < 45 && touchCooldowns[key] <= 0) {
-        spawnExplosion((lx + rx) / 2, (ly + ry) / 2, color);
-        touchCooldowns[key] = 25;
-      }
-      if (touchCooldowns[key] > 0) touchCooldowns[key]--;
-    }
-  }
-
-  // Atualizar + desenhar partículas
-  particles = particles.filter(p => p.life > 0);
-  for (const p of particles) {
-    p.update();
-    p.draw(ctx);
-  }
-
-  // Mensagem de status
-  if (hands.length === 0) {
-    statusEl.textContent = 'MOSTRE SUAS MÃOS PARA A CÂMERA';
-  } else if (hands.length === 1) {
-    statusEl.textContent = 'MOSTRE AMBAS AS MÃOS PARA CRIAR CORDAS';
-  } else {
-    statusEl.textContent = 'APROXIME OS DEDOS PARA CRIAR EXPLOSÕES ✦';
-  }
-}
-
-// ─── MediaPipe setup ──────────────────────────────────────────────────────────
-function startExperience() {
-  document.getElementById('permission-screen').style.display = 'none';
-
-  const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-  });
-
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.6,
-  });
-
-  hands.onResults((results) => {
-    handsData = [];
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-        handsData.push({
-          landmarks: results.multiHandLandmarks[i],
-          handedness: results.multiHandedness[i].label,
-        });
-      }
-    }
-  });
-
-  const camera = new Camera(video, {
-    onFrame: async () => {
-      await hands.send({ image: video });
-    },
-    width: 1280,
-    height: 720,
-    facingMode: 'user',
-  });
-
-  camera.start().catch(err => {
-    document.getElementById('permission-screen').style.display = 'flex';
-    document.getElementById('permission-screen').querySelector('p').textContent =
-      'Erro ao acessar a câmera: ' + err.message;
-  });
-
-  requestAnimationFrame(draw);
-}
-
-// Botão de iniciar
-document.getElementById('start-btn').addEventListener('click', startExperience);
-</script>
+    const cam = new Camera(vElement, {
+        onFrame: async () => { await h.send({ image: vElement }); },
+        width: 1280, height: 720
+    });
+    cam.start();
+  </script>
 </body>
 </html>
