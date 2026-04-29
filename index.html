@@ -1,293 +1,939 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>JJK: Cursed Technique</title>
-    <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', sans-serif; }
-    
-        #ui {
-            position: absolute;
-            top: 10%;
-            width: 100%;
-            text-align: center;
-            color: #fff;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        h1 { 
-            font-size: 3rem; margin: 0; letter-spacing: 10px; 
-            font-weight: 900; 
-            text-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(to bottom, #fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        #technique-name { 
-            font-size: 1.2rem; color: #00ffff; margin-top: 15px; 
-            font-weight: bold; letter-spacing: 4px;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jujutsu Kaisen — Cursed Energy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Bebas+Neue&display=swap');
 
-        /* Large Centered Camera Hub - Taller for Reel Context */
-        #video-container {
-            position: absolute;
-            bottom: 2%;
-            left: 18%;
-            transform: translateX(-50%) scaleX(-1);
-            width: 85vw;
-            max-width: 450px;
-            height: 42vh; 
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            z-index: 20;
-            background-color: #000; 
-            border-radius: 25px;
-            overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
-        }
+  :root {
+    --purple: #6a0dad;
+    --blue: #0a0a2e;
+    --cyan: #00f0ff;
+    --red: #ff2244;
+    --gold: #ffd700;
+    --white: #f0eaf8;
+  }
 
-        video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-        #output_canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        #grain {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 5;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-        }
-    </style>
-    
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  body {
+    background: var(--blue);
+    color: var(--white);
+    font-family: 'Noto Serif JP', serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Background cursed energy lines */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(106,13,173,0.18) 0%, transparent 70%),
+      repeating-linear-gradient(45deg, rgba(106,13,173,0.04) 0px, rgba(106,13,173,0.04) 1px, transparent 1px, transparent 60px),
+      repeating-linear-gradient(-45deg, rgba(0,240,255,0.03) 0px, rgba(0,240,255,0.03) 1px, transparent 1px, transparent 60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+    background: linear-gradient(180deg, rgba(10,10,46,0.95), transparent);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 8px rgba(0,240,255,0.5));
+  }
+
+  .subtitle {
+    font-size: 0.65rem;
+    letter-spacing: 6px;
+    color: rgba(240,234,248,0.5);
+    text-transform: uppercase;
+  }
+
+  /* Main layout */
+  .main {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+  }
+
+  /* Camera */
+  #video-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #webcam {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    opacity: 0.7;
+  }
+
+  #canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Overlay UI */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  /* HUD corners */
+  .hud-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-color: var(--cyan);
+    border-style: solid;
+    opacity: 0.7;
+  }
+  .hud-corner.tl { top:70px; left:16px; border-width: 2px 0 0 2px; }
+  .hud-corner.tr { top:70px; right:16px; border-width: 2px 2px 0 0; }
+  .hud-corner.bl { bottom:16px; left:16px; border-width: 0 0 2px 2px; }
+  .hud-corner.br { bottom:16px; right:16px; border-width: 0 2px 2px 0; }
+
+  /* Power panel */
+  #power-panel {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: all;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 12px;
+  }
+
+  .power-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+  }
+
+  .power-btn:hover .power-icon { filter: brightness(1.5) drop-shadow(0 0 12px currentColor); }
+  .power-btn:active { transform: scale(0.93); }
+
+  .power-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    border: 2px solid;
+    transition: all 0.3s;
+    background: rgba(10,10,46,0.7);
+    backdrop-filter: blur(4px);
+  }
+
+  .power-label {
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(240,234,248,0.7);
+    text-align: center;
+    max-width: 65px;
+  }
+
+  /* Technique display */
+  #technique-display {
+    position: absolute;
+    top: 80px;
+    left: 0; right: 0;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #technique-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    letter-spacing: 6px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    line-height: 1;
+  }
+
+  #technique-sub {
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    margin-top: 4px;
+  }
+
+  /* Status */
+  #status-bar {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    opacity: 0.8;
+    white-space: nowrap;
+  }
+
+  /* Hand detected pulse */
+  #hand-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid var(--cyan);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  #hand-indicator.active {
+    opacity: 1;
+    animation: pulse-ring 1.2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+  }
+
+  /* Effect overlay for techniques */
+  #effect-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  /* Scan line */
+  .scanline {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 3px,
+      rgba(0,0,0,0.07) 3px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* Start screen */
+  #start-screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(10,10,46,0.97), rgba(106,13,173,0.85));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 20px;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .big-kanji {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(4rem, 18vw, 10rem);
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(180deg, var(--gold), var(--red));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(255,34,68,0.6));
+    animation: flicker 3s ease-in-out infinite;
+  }
+
+  @keyframes flicker {
+    0%,100% { filter: drop-shadow(0 0 20px rgba(255,34,68,0.6)); }
+    50% { filter: drop-shadow(0 0 40px rgba(255,34,68,0.9)) drop-shadow(0 0 80px rgba(106,13,173,0.5)); }
+  }
+
+  .start-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    letter-spacing: 8px;
+    color: var(--white);
+  }
+
+  .start-desc {
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: rgba(240,234,248,0.7);
+    max-width: 340px;
+    letter-spacing: 1px;
+  }
+
+  .start-btn {
+    margin-top: 10px;
+    padding: 14px 48px;
+    background: transparent;
+    border: 2px solid var(--cyan);
+    color: var(--cyan);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cyan);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+    z-index: -1;
+  }
+
+  .start-btn:hover { color: var(--blue); }
+  .start-btn:hover::before { transform: scaleX(1); }
+
+  /* Canvas effects drawn in JS */
+  canvas { image-rendering: pixelated; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .power-icon { width: 44px; height: 44px; font-size: 1.3rem; }
+    .power-label { font-size: 0.5rem; max-width: 56px; }
+  }
+</style>
 </head>
 <body>
 
-    <div id="grain"></div>
+<div id="start-screen">
+  <div class="big-kanji">呪</div>
+  <div class="start-title">Jujutsu Kaisen</div>
+  <p class="start-desc">
+    Ative sua câmera e desperte sua <strong>Energia Amaldiçoada</strong>.<br>
+    Mostre sua mão e escolha sua técnica para liberar o poder.
+  </p>
+  <button class="start-btn" onclick="startCamera()">⚡ DESPERTAR</button>
+</div>
 
-    <div id="ui">
-        <h1>呪術廻戦</h1>
-        <div id="technique-name">CURSED ENERGY</div>
+<div class="main">
+  <header>
+    <div>
+      <div class="logo">呪術廻戦</div>
+      <div class="subtitle">Cursed Energy System</div>
+    </div>
+  </header>
+
+  <div id="video-container">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="scanline"></div>
+
+    <div id="overlay">
+      <div class="hud-corner tl"></div>
+      <div class="hud-corner tr"></div>
+      <div class="hud-corner bl"></div>
+      <div class="hud-corner br"></div>
+
+      <div id="status-bar">⬤ AGUARDANDO MÃO...</div>
+
+      <div id="technique-display">
+        <div id="technique-name"></div>
+        <div id="technique-sub"></div>
+      </div>
+
+      <div id="hand-indicator"></div>
+      <canvas id="effect-overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
     </div>
 
-    <div id="video-container">
-        <video class="input_video"></video>
-        <canvas id="output_canvas"></canvas>
+    <div id="power-panel">
+      <!-- Techniques -->
+      <div class="power-btn" onclick="activateTechnique('infinity')">
+        <div class="power-icon" style="border-color:#00f0ff;color:#00f0ff">∞</div>
+        <div class="power-label">Infinito</div>
+      </div>
+      <div class="power-btn" onclick="activateTechnique('divergent')">
+        <div class="power-icon" style="border-color:#6a0dad;color:#bf7fff">⬡</div>
+        <div class="power-label">Fissura Div.</div>
+      </div>
+      <div class="power-btn" onclick="activateTechnique('red')">
+        <div class="power-icon" style="border-color:#ff2244;color:#ff2244">◉</div>
+        <div class="power-label">Red</div>
+      </div>
+      <div class="power-btn" onclick="activateTechnique('blue')">
+        <div class="power-icon" style="border-color:#2244ff;color:#88aaff">◎</div>
+        <div class="power-label">Blue</div>
+      </div>
+      <div class="power-btn" onclick="activateTechnique('hollow')">
+        <div class="power-icon" style="border-color:#ffd700;color:#ffd700">✦</div>
+        <div class="power-label">Hollow Purple</div>
+      </div>
+      <div class="power-btn" onclick="activateTechnique('domain')">
+        <div class="power-icon" style="border-color:#ff4400;color:#ff6600">卍</div>
+        <div class="power-label">Expansão</div>
+      </div>
     </div>
+  </div>
+</div>
 
-<script type="module">
-    import * as THREE from 'three';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    // --- Scene & Rendering ---
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 55;
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let handDetected = false;
+let currentTechnique = null;
+let effectActive = false;
+let particles = [];
+let animFrame;
+let lastHandPos = { x: 0.5, y: 0.5 };
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
+const techniques = {
+  infinity: {
+    name: 'INFINITO',
+    sub: '無下限術式 — LIMITLESS',
+    colors: ['#00f0ff', '#ffffff', '#aaddff'],
+    effect: drawInfinity
+  },
+  divergent: {
+    name: 'FISSURA DIVERGENTE',
+    sub: '蒼 — BLUE LAPSE',
+    colors: ['#6a0dad', '#bf7fff', '#ffffff'],
+    effect: drawDivergent
+  },
+  red: {
+    name: 'VERMELHO',
+    sub: '赫 — RED LAPSE',
+    colors: ['#ff2244', '#ff8800', '#ffdd00'],
+    effect: drawRed
+  },
+  blue: {
+    name: 'AZUL',
+    sub: '蒼 — BLUE LAPSE',
+    colors: ['#2244ff', '#88aaff', '#ffffff'],
+    effect: drawBlue
+  },
+  hollow: {
+    name: 'HOLLOW PURPLE',
+    sub: '虚式「茈」— HOLLOW PURPLE',
+    colors: ['#ffd700', '#ff44ff', '#6600ff'],
+    effect: drawHollow
+  },
+  domain: {
+    name: 'EXPANSÃO DO DOMÍNIO',
+    sub: '領域展開 — DOMAIN EXPANSION',
+    colors: ['#ff4400', '#ff6600', '#ffd700'],
+    effect: drawDomain
+  }
+};
 
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    composer.addPass(bloomPass);
+// ─── Camera ──────────────────────────────────────────────────────────────────
+async function startCamera() {
+  document.getElementById('start-screen').style.display = 'none';
+  const video = document.getElementById('webcam');
+  const canvas = document.getElementById('canvas');
 
-    const COUNT = 20000;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(COUNT * 3);
-    const colors = new Float32Array(COUNT * 3);
-    const sizes = new Float32Array(COUNT);
-    
-    const targetPositions = new Float32Array(COUNT * 3);
-    const targetColors = new Float32Array(COUNT * 3);
-    const targetSizes = new Float32Array(COUNT);
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-    const particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.3, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
-    scene.add(particles);
-
-    // Technique Functions 
-    function getRed(i) {
-        if(i < COUNT * 0.1) {
-            const r = Math.random() * 9;
-            const theta = Math.random() * 6.28; const phi = Math.acos(2 * Math.random() - 1);
-            return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi), r: 3, g: 0.1, b: 0.1, s: 2.5 };
-        } else {
-            const armCount = 3; const t = (i / COUNT); 
-            const angle = t * 15 + ((i % armCount) * (Math.PI * 2 / armCount));
-            const radius = 2 + (t * 40); 
-            return { x: radius * Math.cos(angle), y: radius * Math.sin(angle), z: (Math.random() - 0.5) * (10 * t), r: 0.8, g: 0, b: 0, s: 1.0 };
-        }
-    }
-
-    function getVoid(i) {
-        if (i < COUNT * 0.15) {
-            const angle = Math.random() * Math.PI * 2;
-            return { x: 26 * Math.cos(angle), y: 26 * Math.sin(angle), z: (Math.random()-0.5) * 1, r: 1, g: 1, b: 1, s: 2.5 };
-        } else {
-            const radius = 30 + Math.random() * 90;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            return { x: radius * Math.sin(phi) * Math.cos(theta), y: radius * Math.sin(phi) * Math.sin(theta), z: radius * Math.cos(phi), r: 0.1, g: 0.6, b: 1.0, s: 0.7 };
-        }
-    }
-
-    function getPurple(i) {
-        if (Math.random() > 0.8) return { x: (Math.random() - 0.5) * 100, y: (Math.random() - 0.5) * 100, z: (Math.random() - 0.5) * 100, r: 0.5, g: 0.5, b: 0.7, s: 0.8 };
-        const r = 20; const theta = Math.random() * Math.PI * 2; const phi = Math.acos(2 * Math.random() - 1);
-        return { x: r * Math.sin(phi) * Math.cos(theta), y: r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi), r: 0.6, g: 0.5, b: 1.0, s: 2.5 };
-    }
-
-    function getShrine(i) {
-        const total = COUNT;
-        if (i < total * 0.3) return { x: (Math.random()-0.5)*80, y: -15, z: (Math.random()-0.5)*80, r: 0.4, g: 0, b: 0, s: 0.8 };
-        else if (i < total * 0.4) {
-            const px = ((i%4)<2?1:-1)*12; const pz = ((i%4)%2==0?1:-1)*8;
-            return { x: px+(Math.random()-0.5)*2, y: -15+Math.random()*30, z: pz+(Math.random()-0.5)*2, r: 0.2, g: 0.2, b: 0.2, s: 0.6 };
-        } else if (i < total * 0.6) {
-            const t = Math.random() * Math.PI * 2; const rad = Math.random() * 30;
-            const curve = Math.pow(rad/30, 2) * 10; 
-            return { x: rad*Math.cos(t), y: 15 - curve + (Math.random()*2), z: rad*Math.sin(t)*0.6, r: 0.6, g: 0, b: 0, s: 0.6 };
-        } else return { x: 0, y: 0, z: 0, r: 0, g: 0, b: 0, s: 0 };
-    }
-
-    // Hand Tracking
-    let currentTech = 'neutral';
-    let shakeIntensity = 0;
-    const videoElement = document.querySelector('.input_video');
-    const canvasElement = document.getElementById('output_canvas');
-    const canvasCtx = canvasElement.getContext('2d');
-    let glowColor = '#00ffff';
-
-    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7 });
-
-    hands.onResults((results) => {
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        let detected = 'neutral';
-
-        if (results.multiHandLandmarks) {
-            results.multiHandLandmarks.forEach((lm) => {
-                drawConnectors(canvasCtx, lm, HAND_CONNECTIONS, {color: glowColor, lineWidth: 5});
-                drawLandmarks(canvasCtx, lm, {color: '#fff', lineWidth: 1, radius: 2});
-
-                const isUp = (t, p) => lm[t].y < lm[p].y;
-                const pinch = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
-                
-                if (pinch < 0.04) detected = 'purple';
-                else if (isUp(8,6) && isUp(12,10) && isUp(16,14) && isUp(20,18)) detected = 'shrine';
-                else if (isUp(8,6) && isUp(12,10) && !isUp(16,14)) detected = 'void';
-                else if (isUp(8,6) && !isUp(12,10)) detected = 'red';
-            });
-        }
-        updateState(detected);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
     });
+    video.srcObject = stream;
 
-    function updateState(tech) {
-        if(currentTech === tech) return;
-        currentTech = tech;
-        const nameEl = document.getElementById('technique-name');
-        shakeIntensity = tech !== 'neutral' ? 0.4 : 0;
+    video.onloadedmetadata = () => {
+      canvas.width = video.videoWidth || window.innerWidth;
+      canvas.height = video.videoHeight || window.innerHeight;
+      initMediaPipe(video);
+    };
+  } catch (e) {
+    alert('Câmera não encontrada. Tente num dispositivo com câmera e permita o acesso.');
+  }
+}
 
-        if(tech === 'shrine') { glowColor = '#ff0000'; nameEl.innerText = "Domain Expansion: Malevolent Shrine"; bloomPass.strength = 2.5; }
-        else if(tech === 'purple') { glowColor = '#bb00ff'; nameEl.innerText = "Secret Technique: Hollow Purple"; bloomPass.strength = 4.0; }
-        else if(tech === 'void') { glowColor = '#00ffff'; nameEl.innerText = "Domain Expansion: Infinite Void"; bloomPass.strength = 2.0; }
-        else if(tech === 'red') { glowColor = '#ff3333'; nameEl.innerText = "Reverse Cursed Technique: Red"; bloomPass.strength = 2.5; }
-        else { glowColor = '#00ffff'; nameEl.innerText = "Neutral State"; bloomPass.strength = 1.0; }
+// ─── MediaPipe ───────────────────────────────────────────────────────────────
+function initMediaPipe(video) {
+  const hands = new Hands({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+  });
 
-        for(let i=0; i<COUNT; i++) {
-            let p;
-            if(tech === 'neutral') {
-                if(i < COUNT * 0.05) {
-                    const r = 15 + Math.random()*20; const t = Math.random()*6.28; const ph = Math.random()*3.14;
-                    p = { x: r*Math.sin(ph)*Math.cos(t), y: r*Math.sin(ph)*Math.sin(t), z: r*Math.cos(ph), r: 0.1, g: 0.1, b: 0.2, s: 0.4 };
-                } else p = { x:0, y:0, z:0, r:0, g:0, b:0, s:0 };
-            }
-            else if(tech === 'red') p = getRed(i);
-            else if(tech === 'void') p = getVoid(i);
-            else if(tech === 'purple') p = getPurple(i);
-            else if(tech === 'shrine') p = getShrine(i);
-            
-            targetPositions[i*3] = p.x; targetPositions[i*3+1] = p.y; targetPositions[i*3+2] = p.z;
-            targetColors[i*3] = p.r; targetColors[i*3+1] = p.g; targetColors[i*3+2] = p.b;
-            targetSizes[i] = p.s;
-        }
-    }
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
 
-    const cameraUtils = new Camera(videoElement, {
-        onFrame: async () => {
-            canvasElement.width = videoElement.videoWidth;
-            canvasElement.height = videoElement.videoHeight;
-            await hands.send({image: videoElement});
-        }, width: 640, height: 480
+  hands.onResults(onHandResults);
+
+  const camera = new Camera(video, {
+    onFrame: async () => { await hands.send({ image: video }); },
+    width: 1280, height: 720
+  });
+  camera.start();
+
+  // Start render loop
+  renderLoop();
+}
+
+function onHandResults(results) {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const landmarks = results.multiHandLandmarks[0];
+    handDetected = true;
+
+    // Average hand position (center palm)
+    const palm = landmarks[9];
+    lastHandPos = { x: 1 - palm.x, y: palm.y }; // mirror x
+
+    drawHandGlow(ctx, landmarks, w, h);
+    updateStatus(true);
+  } else {
+    handDetected = false;
+    updateStatus(false);
+  }
+}
+
+function drawHandGlow(ctx, landmarks, w, h) {
+  const t = techniques[currentTechnique];
+  const colors = t ? t.colors : ['#00f0ff', '#6a0dad'];
+
+  // Draw cursed energy hand outline
+  ctx.save();
+
+  const points = landmarks.map(lm => ({
+    x: (1 - lm.x) * w,
+    y: lm.y * h
+  }));
+
+  // Connections
+  const connections = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],
+    [0,17]
+  ];
+
+  const glow = colors[0];
+  ctx.strokeStyle = glow;
+  ctx.lineWidth = 3;
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = glow;
+  ctx.globalAlpha = 0.85;
+
+  connections.forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(points[a].x, points[a].y);
+    ctx.lineTo(points[b].x, points[b].y);
+    ctx.stroke();
+  });
+
+  // Joints
+  points.forEach((p, i) => {
+    const r = i === 0 ? 8 : 5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? colors[1] : glow;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = glow;
+    ctx.fill();
+  });
+
+  // Spawn particles from fingertips
+  if (currentTechnique && effectActive) {
+    [4, 8, 12, 16, 20].forEach(i => {
+      spawnParticles(points[i].x, points[i].y, colors);
     });
-    cameraUtils.start();
+  }
 
-    // Animation
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        if (shakeIntensity > 0) {
-            renderer.domElement.style.transform = `translate(${(Math.random()-0.5)*shakeIntensity*40}px, ${(Math.random()-0.5)*shakeIntensity*40}px)`;
-        } else {
-            renderer.domElement.style.transform = 'translate(0,0)';
-        }
+  ctx.restore();
+}
 
-        const pos = particles.geometry.attributes.position.array;
-        const col = particles.geometry.attributes.color.array;
-        const siz = particles.geometry.attributes.size.array;
-
-        for(let i=0; i<COUNT*3; i++) {
-            pos[i] += (targetPositions[i] - pos[i]) * 0.1;
-            col[i] += (targetColors[i] - col[i]) * 0.1;
-        }
-        for(let i=0; i<COUNT; i++) siz[i] += (targetSizes[i] - siz[i]) * 0.1;
-
-        particles.geometry.attributes.position.needsUpdate = true;
-        particles.geometry.attributes.color.needsUpdate = true;
-        particles.geometry.attributes.size.needsUpdate = true;
-        
-        // UPDATED ROTATION LOGIC: Locking rotation for Shrine
-        if(currentTech === 'red') {
-            particles.rotation.z -= 0.1;
-        } else if (currentTech === 'purple') {
-            particles.rotation.z += 0.2; 
-            particles.rotation.y += 0.05;
-        } else if (currentTech === 'shrine') {
-            // FORCE UPRIGHT: Reset and freeze all rotations
-            particles.rotation.set(0, 0, 0); 
-        } else {
-            // Default Neutral rotation
-            particles.rotation.y += 0.005;
-        }
-
-        composer.render();
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        composer.setSize(window.innerWidth, window.innerHeight);
+// ─── Particles ───────────────────────────────────────────────────────────────
+function spawnParticles(x, y, colors) {
+  for (let i = 0; i < 3; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 1,
+      decay: 0.03 + Math.random() * 0.04,
+      size: 2 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)]
     });
+  }
+}
+
+function updateParticles(ctx) {
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= p.decay;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life * 0.8;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = p.color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+// ─── Effect canvas render loop ────────────────────────────────────────────────
+function renderLoop() {
+  const ec = document.getElementById('effect-overlay');
+  ec.width = window.innerWidth;
+  ec.height = window.innerHeight;
+  const ctx2 = ec.getContext('2d');
+
+  function loop() {
+    ctx2.clearRect(0, 0, ec.width, ec.height);
+    if (effectActive && currentTechnique) {
+      const t = techniques[currentTechnique];
+      t.effect(ctx2, ec.width, ec.height, Date.now());
+    }
+    updateParticles(ctx2);
+    animFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ─── Status ───────────────────────────────────────────────────────────────────
+function updateStatus(detected) {
+  const s = document.getElementById('status-bar');
+  const hi = document.getElementById('hand-indicator');
+  if (detected) {
+    s.textContent = '⬤ MÃO DETECTADA — ENERGIA AMALDIÇOADA ATIVA';
+    s.style.color = '#00f0ff';
+    hi.classList.add('active');
+  } else {
+    s.textContent = '⬤ AGUARDANDO MÃO...';
+    s.style.color = 'rgba(0,240,255,0.5)';
+    hi.classList.remove('active');
+  }
+}
+
+// ─── Technique activation ─────────────────────────────────────────────────────
+function activateTechnique(name) {
+  currentTechnique = name;
+  effectActive = true;
+  const t = techniques[name];
+
+  const tn = document.getElementById('technique-name');
+  const ts = document.getElementById('technique-sub');
+
+  tn.textContent = t.name;
+  tn.style.color = t.colors[0];
+  tn.style.textShadow = `0 0 30px ${t.colors[0]}, 0 0 60px ${t.colors[0]}`;
+  tn.style.opacity = 1;
+  ts.textContent = t.sub;
+  ts.style.color = t.colors[1] || t.colors[0];
+  ts.style.opacity = 1;
+
+  // Auto fade after 4s
+  clearTimeout(window._techTimer);
+  window._techTimer = setTimeout(() => {
+    tn.style.opacity = 0;
+    ts.style.opacity = 0;
+    effectActive = false;
+  }, 4000);
+
+  // Screen flash
+  flashScreen(t.colors[0]);
+}
+
+function flashScreen(color) {
+  const flash = document.createElement('div');
+  flash.style.cssText = `position:fixed;inset:0;background:${color};opacity:0.3;z-index:999;pointer-events:none;transition:opacity 0.5s`;
+  document.body.appendChild(flash);
+  setTimeout(() => { flash.style.opacity = 0; setTimeout(() => flash.remove(), 600); }, 50);
+}
+
+// ─── Effect Drawers ───────────────────────────────────────────────────────────
+let _t = 0;
+
+function drawInfinity(ctx, w, h, time) {
+  _t = time * 0.001;
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+
+  // Infinity symbol rings
+  for (let i = 0; i < 5; i++) {
+    const r = 40 + i * 30 + Math.sin(_t * 2 + i) * 10;
+    const alpha = 0.15 - i * 0.025;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = alpha + 0.05;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#00f0ff';
+    ctx.stroke();
+  }
+
+  // Rotating lines
+  for (let i = 0; i < 8; i++) {
+    const angle = (_t * 0.5) + (i / 8) * Math.PI * 2;
+    const len = 80 + Math.sin(_t + i) * 20;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
+    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = 0.08;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 5;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawDivergent(ctx, w, h, time) {
+  const t = time * 0.001;
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+
+  // Hexagonal grid emanating
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 + t;
+    const dist = 50 + (t * 30) % 120;
+    const x = cx + Math.cos(angle) * dist;
+    const y = cy + Math.sin(angle) * dist;
+    ctx.beginPath();
+    for (let j = 0; j < 6; j++) {
+      const a2 = (j / 6) * Math.PI * 2;
+      const px = x + Math.cos(a2) * 20;
+      const py = y + Math.sin(a2) * 20;
+      j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#6a0dad';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.5;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#bf7fff';
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawRed(ctx, w, h, time) {
+  const t = time * 0.001;
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+
+  // Repulsion shockwaves
+  const ring = (t * 80) % 200;
+  ctx.beginPath();
+  ctx.arc(cx, cy, ring, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ff2244';
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = Math.max(0, 1 - ring / 200);
+  ctx.shadowBlur = 25;
+  ctx.shadowColor = '#ff2244';
+  ctx.stroke();
+
+  // Inner fire
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+  grad.addColorStop(0, 'rgba(255,200,0,0.4)');
+  grad.addColorStop(0.5, 'rgba(255,34,68,0.2)');
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = 0.6;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawBlue(ctx, w, h, time) {
+  const t = time * 0.001;
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+
+  // Attraction vortex
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * Math.PI * 2 - t * 2;
+    const r = 30 + Math.sin(t * 3 + i) * 10;
+    const px = cx + Math.cos(angle) * r;
+    const py = cy + Math.sin(angle) * r;
+    ctx.beginPath();
+    ctx.arc(px, py, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#88aaff';
+    ctx.globalAlpha = 0.7;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#2244ff';
+    ctx.fill();
+  }
+
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 70);
+  grad.addColorStop(0, 'rgba(34,68,255,0.35)');
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 70, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = 0.5;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawHollow(ctx, w, h, time) {
+  const t = time * 0.001;
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+
+  // Purple converging orb
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100 + Math.sin(t * 4) * 20);
+  grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(0.2, 'rgba(255,200,0,0.7)');
+  grad.addColorStop(0.5, 'rgba(150,0,255,0.5)');
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = 0.7;
+  ctx.shadowBlur = 40;
+  ctx.shadowColor = '#cc00ff';
+  ctx.fill();
+
+  // Orbiting red+blue
+  [-1, 1].forEach((dir, idx) => {
+    const a = t * 3 * dir;
+    const ox = cx + Math.cos(a) * 50;
+    const oy = cy + Math.sin(a) * 50;
+    const colors = ['#ff2244', '#2244ff'];
+    const grad2 = ctx.createRadialGradient(ox, oy, 0, ox, oy, 20);
+    grad2.addColorStop(0, colors[idx]);
+    grad2.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(ox, oy, 20, 0, Math.PI * 2);
+    ctx.fillStyle = grad2;
+    ctx.globalAlpha = 0.8;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawDomain(ctx, w, h, time) {
+  const t = time * 0.001;
+
+  // Full screen dark vignette with runes
+  const vig = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w,h)*0.7);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(10,10,46,0.75)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+
+  // Rotating circle border
+  ctx.save();
+  ctx.translate(w/2, h/2);
+  ctx.rotate(t * 0.3);
+  const R = Math.min(w, h) * 0.42;
+  ctx.beginPath();
+  ctx.arc(0, 0, R, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ff4400';
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.6;
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = '#ff4400';
+  ctx.stroke();
+
+  // Rune marks
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    ctx.save();
+    ctx.rotate(a);
+    ctx.translate(R, 0);
+    ctx.fillStyle = '#ffd700';
+    ctx.font = `${18 + Math.sin(t*2+i)*3}px 'Noto Serif JP'`;
+    ctx.globalAlpha = 0.8;
+    ctx.fillText(['呪','術','廻','戦','領','域','展','開','赫','蒼','紫','∞'][i], -9, 6);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Hand glow at center of hand
+  const cx = lastHandPos.x * w;
+  const cy = lastHandPos.y * h;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+  g.addColorStop(0, 'rgba(255,100,0,0.6)');
+  g.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.globalAlpha = 0.8;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// Resize effect canvas
+window.addEventListener('resize', () => {
+  const ec = document.getElementById('effect-overlay');
+  ec.width = window.innerWidth;
+  ec.height = window.innerHeight;
+});
 </script>
 </body>
 </html>
